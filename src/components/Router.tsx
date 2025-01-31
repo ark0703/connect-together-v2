@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Profile from "../pages/Profile";
 import CreateUserProfile from "../pages/CreateUserProfile";
+import MessageList from "../pages/MessageList";
 
 export default function Router() {
   const { isLoggedIn, user } = useAuth();
@@ -16,12 +17,15 @@ export default function Router() {
       {isLoggedIn && user && (
         <>
           <Route path="/" element={isLoggedIn ? <Home /> : <Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          <Route path="*" element={<h1>Not Found</h1>} />
+          <Route
+            path="/messages"
+            element={isLoggedIn ? <MessageList /> : <Login />}
+          />
         </>
       )}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<h1>Not Found</h1>} />
     </Routes>
   );
 }
