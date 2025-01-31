@@ -7,6 +7,7 @@ import {
 } from "react";
 import { UserType } from "../types/types";
 import supabase from "../utils/supabase";
+import useDebounce from "../hooks/useDebounce";
 
 const AuthContext = createContext<{
   user: UserType | null;
@@ -31,8 +32,9 @@ export default function AuthContextProvider({
 }) {
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
-  const getUser = () => {
+  const getUser = useDebounce(() => {
     supabase
       .from("users")
       .select("*")
@@ -44,12 +46,13 @@ export default function AuthContextProvider({
         }
         setUser(data);
       });
-  };
+  });
 
   useEffect(() => {
     // Check if user is logged in
     supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        setIsLoggedIn(true);
         // If user is logged in, get user profile
         getUser();
       } else {
@@ -60,6 +63,7 @@ export default function AuthContextProvider({
 
     supabase.auth.getUser().then((user) => {
       if (user) {
+        setIsLoggedIn(true);
         getUser();
       }
       setLoading(false);
@@ -76,7 +80,7 @@ export default function AuthContextProvider({
         signOut: () => {
           supabase.auth.signOut();
         },
-        isLoggedIn: user !== null,
+        isLoggedIn: isLoggedIn,
       }}
     >
       {children}

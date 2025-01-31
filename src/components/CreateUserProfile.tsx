@@ -1,7 +1,7 @@
 import React from "react";
 import { TextField, Button, Box, MenuItem } from "@mui/material";
 
-const Form: React.FC = () => {
+const CreateUserProfile: React.FC = () => {
   return (
     <Box
       component="form"
@@ -9,7 +9,6 @@ const Form: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: 2,
-        maxWidth: 400,
         margin: "auto",
         padding: 2,
       }}
@@ -42,4 +41,4 @@ const Form: React.FC = () => {
   );
 };
 
-export default Form;
+export default CreateUserProfile;

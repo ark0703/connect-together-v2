@@ -4,19 +4,24 @@ import { useAuth } from "../contexts/AuthContext";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Profile from "../pages/Profile";
+import CreateUserProfile from "../pages/CreateUserProfile";
 
 export default function Router() {
-  const { user, isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={user ? <Home /> : <Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/profile"
-        element={isLoggedIn && user?.first_name ? <Profile /> : <Home />}
-      />
-      <Route path="*" element={<h1>Not Found</h1>} />
+      {isLoggedIn && !user && (
+        <Route path="*" element={<CreateUserProfile />} />
+      )}
+      {isLoggedIn && user && (
+        <>
+          <Route path="/" element={isLoggedIn ? <Home /> : <Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route path="*" element={<h1>Not Found</h1>} />
+        </>
+      )}
     </Routes>
   );
 }
