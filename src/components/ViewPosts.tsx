@@ -4,6 +4,7 @@ import supabase from "../utils/supabase";
 import { Box, Typography } from "@mui/material";
 import moment from "moment";
 import readImage from "../utils/readImage";
+import ViewComments from "./ViewComments";
 
 export default function ViewPosts() {
   const [posts, setPosts] = useState<PostUserType[]>([]);
@@ -39,6 +40,7 @@ export default function ViewPosts() {
           <Typography>
             {moment(post.created_at).fromNow()} by {post.user_id.username}
           </Typography>
+          <ViewComments postId={post.id} />
         </Box>
       ))}
     </Box>
