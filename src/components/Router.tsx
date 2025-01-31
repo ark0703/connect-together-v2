@@ -6,9 +6,11 @@ import Register from "../pages/Register";
 import Profile from "../pages/Profile";
 import CreateUserProfile from "../pages/CreateUserProfile";
 import MessageList from "../pages/MessageList";
+import Messages from "../pages/Messages";
 
 export default function Router() {
   const { isLoggedIn, user } = useAuth();
+  console.log(isLoggedIn, user);
   return (
     <Routes>
       {isLoggedIn && !user && (
@@ -16,15 +18,17 @@ export default function Router() {
       )}
       {isLoggedIn && user && (
         <>
-          <Route path="/" element={isLoggedIn ? <Home /> : <Login />} />
-          <Route
-            path="/messages"
-            element={isLoggedIn ? <MessageList /> : <Login />}
-          />
+          <Route path="/" element={<Home />} />
+          <Route path="/messages" element={<MessageList />} />
+          <Route path="/messages/:username" element={<Messages />} />
         </>
       )}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {!isLoggedIn && (
+        <>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </>
+      )}
       <Route path="*" element={<h1>Not Found</h1>} />
     </Routes>
   );

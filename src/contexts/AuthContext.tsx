@@ -35,17 +35,28 @@ export default function AuthContextProvider({
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   const getUser = useDebounce(() => {
-    supabase
-      .from("users")
-      .select("*")
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-        setUser(data);
-      });
+    supabase.auth.getUser().then(({ error, data: { user } }) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (!user) {
+        setUser(null);
+        return;
+      }
+      supabase
+        .from("users")
+        .select("*")
+        .eq("uuid", user.id)
+        .single()
+        .then(({ data, error }) => {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          setUser(data);
+        });
+    });
   });
 
   useEffect(() => {
@@ -61,7 +72,10 @@ export default function AuthContextProvider({
       }
     });
 
-    supabase.auth.getUser().then((user) => {
+    supabase.auth.getUser().then(({ error, data: { user } }) => {
+      if (error) {
+        console.error(error);
+      }
       if (user) {
         setIsLoggedIn(true);
         getUser();

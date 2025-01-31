@@ -1,5 +1,7 @@
 import { Database } from "./supabase";
 
+export type MessageType = Database["public"]["Tables"]["message"]["Row"];
+
 export type UserType = Database["public"]["Tables"]["users"]["Row"];
 
 export type PostType = Database["public"]["Tables"]["posts"]["Row"];
@@ -13,3 +15,5 @@ type UserIDType = {
 export type PostUserType = PostType & UserIDType;
 
 export type CommentUserType = CommentType & UserIDType;
+
+export type MessageUserType = MessageType & UserIDType;

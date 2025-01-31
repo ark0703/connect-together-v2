@@ -3,6 +3,7 @@ import supabase from "../utils/supabase";
 import { UserType } from "../types/types";
 import { Box, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router";
 
 export default function MessageList() {
   const [recentMessages, setRecentMessages] = useState<UserType[]>([]);
@@ -28,9 +29,12 @@ export default function MessageList() {
     <Box>
       <Typography variant="h1">Recent Messages</Typography>
       {recentMessages.map((message) => (
-        <Box key={`message-${message.id}`}>
+        <Link
+          to={"/messages/" + message.username}
+          key={`message-${message.id}`}
+        >
           <p>{message.username}</p>
-        </Box>
+        </Link>
       ))}
     </Box>
   );
