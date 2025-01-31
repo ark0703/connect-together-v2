@@ -5,6 +5,7 @@ import supabase from "../utils/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Box, Button, TextField } from "@mui/material";
 import moment from "moment";
+import { useSupabaseLiveListener } from "../contexts/SupabaseLiveListener";
 
 export default function Messages() {
   const [secondUser, setSecondUser] = useState<UserType | null>(null);
@@ -13,6 +14,8 @@ export default function Messages() {
 
   const { username } = useParams();
   const { user } = useAuth();
+
+  const { events, setEvents } = useSupabaseLiveListener();
 
   useEffect(() => {
     supabase
@@ -29,7 +32,7 @@ export default function Messages() {
       });
   }, []);
 
-  useEffect(() => {
+  const getData = () => {
     if (!secondUser) return;
     if (!user) return;
     supabase
@@ -47,7 +50,18 @@ export default function Messages() {
         }
         setMessages(data);
       });
+  };
+
+  useEffect(() => {
+    getData();
   }, [secondUser, user]);
+
+  useEffect(() => {
+    if (events === "insert-message") {
+      getData();
+      setEvents("");
+    }
+  }, [events]);
 
   return (
     <Box>

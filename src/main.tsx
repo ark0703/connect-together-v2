@@ -8,14 +8,17 @@ import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
 import { CssBaseline } from "@mui/material";
 import AuthContextProvider from "./contexts/AuthContext.tsx";
+import SupabaseLiveListener from "./contexts/SupabaseLiveListener.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <CssBaseline />
     <BrowserRouter>
-      <AuthContextProvider>
-        <App />
-      </AuthContextProvider>
+      <SupabaseLiveListener>
+        <AuthContextProvider>
+          <App />
+        </AuthContextProvider>
+      </SupabaseLiveListener>
     </BrowserRouter>
   </StrictMode>
 );
