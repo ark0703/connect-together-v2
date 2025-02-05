@@ -24,12 +24,11 @@ export default function Register() {
     status: false,
     message: "",
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+
     console.log("Logging in");
 
     if (email === "" || !new RegExp(/.+@.+\..+/).test(email)) {
@@ -43,7 +42,7 @@ export default function Register() {
             : ""
         }`,
       });
-      setLoading(false);
+
       return;
     }
     setEmailError({ status: false, message: "" });
@@ -63,7 +62,6 @@ export default function Register() {
       });
       console.log("error setting up password");
 
-      setLoading(false);
       return;
     }
     if (password !== conPassword) {
@@ -74,7 +72,6 @@ export default function Register() {
       });
       console.log("Password do not match");
 
-      setLoading(false);
       return;
     }
     setPasswordError({ status: false, message: "" });
@@ -84,7 +81,6 @@ export default function Register() {
         console.error(error);
 
         setError(error.message);
-        setLoading(false);
 
         return;
       }

@@ -23,13 +23,11 @@ export default function Login() {
     status: false,
     message: "",
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     console.log("Logging in");
 
     if (email === "" || !new RegExp(/.+@.+\..+/).test(email)) {
@@ -43,7 +41,7 @@ export default function Login() {
             : ""
         }`,
       });
-      setLoading(false);
+
       return;
     }
     setEmailError({ status: false, message: "" });
@@ -60,7 +58,7 @@ export default function Login() {
             : ""
         }`,
       });
-      setLoading(false);
+
       return;
     }
     setPasswordError({ status: false, message: "" });
@@ -74,7 +72,7 @@ export default function Login() {
         return;
       }
       navigate("/home");
-      setLoading(false);
+
       console.log("Logged in");
     });
   };
