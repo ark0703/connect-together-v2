@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { PostUserType } from "../types/types";
+import { PostLikeUserType } from "../types/types";
 import supabase from "../utils/supabase";
 import {
   Box,
@@ -20,7 +20,7 @@ import readImage from "../utils/readImage";
 import ViewComments from "./ViewComments";
 
 export default function ViewPosts() {
-  const [posts, setPosts] = useState<PostUserType[]>([]);
+  const [posts, setPosts] = useState<PostLikeUserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchingMore, setFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -29,7 +29,7 @@ export default function ViewPosts() {
   );
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
-  const LIMIT = 20;
+  const LIMIT = 1;
   const [offset, setOffset] = useState(0);
 
   // Fetch Posts Function
@@ -191,7 +191,7 @@ export default function ViewPosts() {
                       <ChatBubbleOutlineIcon />
                     </IconButton>
                     <Typography variant="body2" sx={{ ml: 1 }}>
-                      {post.comments?.length || 0}
+                      {post.comments.length || 0}
                     </Typography>
                   </Box>
                 </Box>

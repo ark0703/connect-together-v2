@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../utils/supabase";
 import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";

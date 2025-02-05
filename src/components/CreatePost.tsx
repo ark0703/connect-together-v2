@@ -13,7 +13,7 @@ import {
 import UploadImage from "./UploadImage";
 import supabase from "../utils/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { PostType, PostUserType } from "../types/types";
+import { PostType } from "../types/types";
 
 interface CreatePostPopupProps {
   open: boolean;
@@ -27,7 +27,7 @@ export default function CreatePostPopup({
   const [images, setImages] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [postType, setPostType] = useState<string>("post");
+  const [postType, setPostType] = useState<string>("others");
 
   const { user } = useAuth();
 
@@ -94,10 +94,10 @@ export default function CreatePostPopup({
             onChange={handlePostTypeChange}
             aria-label="post type"
           >
-            <ToggleButton value="job" aria-label="job">
+            <ToggleButton value="jobs" aria-label="jobs">
               Job
             </ToggleButton>
-            <ToggleButton value="event" aria-label="event">
+            <ToggleButton value="events" aria-label="events">
               Event
             </ToggleButton>
             <ToggleButton value="others" aria-label="others">

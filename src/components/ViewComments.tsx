@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CommentUserType } from "../types/types";
+import { PostCommentUserType } from "../types/types";
 import supabase from "../utils/supabase";
 import { Box, Typography } from "@mui/material";
 import moment from "moment";
@@ -12,7 +12,7 @@ export default function ViewComments({
   postId: number;
   onCommentAdded: () => void;
 }) {
-  const [comments, setComments] = useState<CommentUserType[]>([]);
+  const [comments, setComments] = useState<PostCommentUserType[]>([]);
 
   useEffect(() => {
     const fetchComments = async () => {

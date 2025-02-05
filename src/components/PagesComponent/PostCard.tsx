@@ -113,10 +113,10 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
   return (
     <Card
       sx={{
-        maxWidth: 500,
-        bgcolor: "background.paper",
-        boxShadow: 3,
-        borderRadius: 2,
+        mt: 2,
+        display: "grid",
+        gridTemplateColumns: "1fr",
+        gap: 2,
       }}
     >
       {/* Header: Profile Image & Name */}
@@ -133,9 +133,15 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
       {/* Media (Image or Video) */}
       {post?.media?.map((mediaUrl: string, index: number) => (
         <CardMedia
+          sx={{
+            width: "100%",
+            height: "auto",
+            maxHeight: "80vh",
+            objectFit: "cover",
+          }}
           key={index}
           component="img"
-          height="250"
+          height="250px"
           image={readImage(mediaUrl)}
           alt="Post media"
         />
@@ -165,8 +171,8 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
           onClick={() => setOpenComments(!openComments)}
         >
           <CommentIcon />
-          {commentCount}
         </IconButton>
+        <Typography variant="body2">{commentCount}</Typography>
       </CardActions>
 
       {/* Comments Section */}

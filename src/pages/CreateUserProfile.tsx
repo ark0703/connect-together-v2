@@ -14,32 +14,14 @@ import {
 } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
 import supabase from "../utils/supabase";
+import { UserType } from "../types/types";
 
 export default function UserProfile() {
   const { user: authUser } = useAuth();
 
-  interface User {
-    batch: string;
-    can_post: boolean;
-    college: string;
-    course: string;
-    created_at: string;
-    department: string;
-    email: string;
-    first_name: string;
-    id: number;
-    is_alimony: boolean;
-    is_online: boolean | null;
-    last_name: string | null;
-    phone: string;
-    status: boolean;
-    uuid: string;
-    username: string;
-  }
-
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<User>>({});
+  const [formData, setFormData] = useState<Partial<UserType>>({});
   const [customDepartment, setCustomDepartment] = useState("");
 
   const departments = ["CSE", "ECE", "ME", "CE", "Other"];
@@ -63,8 +45,8 @@ export default function UserProfile() {
 
   const handleUpdateClick = () => setEditing(true);
 
-  const handleChange = (field: keyof User, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof UserType, value: string | boolean) => {
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -100,7 +82,7 @@ export default function UserProfile() {
     if (error) {
       console.error(error);
     } else {
-      setUser(updateData as User);
+      setUser(updateData as UserType);
       setEditing(false);
     }
   };
@@ -141,13 +123,13 @@ export default function UserProfile() {
                     {editing && editable ? (
                       <TextField
                         fullWidth
-                        value={formData[key as keyof User] || ""}
+                        value={formData[key as keyof UserType] || ""}
                         onChange={(e) =>
-                          handleChange(key as keyof User, e.target.value)
+                          handleChange(key as keyof UserType, e.target.value)
                         }
                       />
                     ) : (
-                      user?.[key as keyof User] || "—"
+                      user?.[key as keyof UserType] || "—"
                     )}
                   </TableCell>
                 </TableRow>

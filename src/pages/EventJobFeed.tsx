@@ -17,6 +17,7 @@ const FeedPage = () => {
     supabase
       .from("posts")
       .select("*, user_id(*), likes(*, user_id(*)), comments(*, user_id(*))")
+      .eq("type", type || "")
       .order("created_at", { ascending: false })
       .range(0, 19)
       .then(({ data, error }) => {
@@ -30,18 +31,26 @@ const FeedPage = () => {
   }, []);
 
   return (
-    <Box sx={{ maxWidth: 600, margin: "auto", mt: 4 }}>
+    <Box
+      sx={{
+        maxWidth: {
+          xs: "100%", // Full width on extra-small screens
+          sm: "540px", // Small screens
+          md: "720px", // Medium screens
+          lg: "960px", // Large screens
+          xl: "1140px", // Extra-large screens
+        },
+        margin: "auto",
+        mt: 4,
+      }}
+    >
       <Typography variant="h4" gutterBottom>
         {type === "events" ? "Events" : "Jobs"}
       </Typography>
       {loading ? (
         <CircularProgress />
       ) : (
-        posts.map((post) => (
-          <Card key={post.id} sx={{ mb: 2, p: 2 }}>
-            <PostCard {...post} />
-          </Card>
-        ))
+        posts.map((post) => <PostCard key={post.id} {...post} />)
       )}
     </Box>
   );
