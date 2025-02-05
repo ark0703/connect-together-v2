@@ -1,5 +1,5 @@
 import { Delete } from "@mui/icons-material";
-import { Box, Button, Icon, IconButton, TextField } from "@mui/material";
+import { Box, Button, Icon, IconButton } from "@mui/material";
 import { useRef } from "react";
 
 export default function UploadImage({
@@ -12,6 +12,7 @@ export default function UploadImage({
   maxImages?: number;
 }) {
   const inputFile = useRef<HTMLInputElement | null>(null);
+  console.log(maxImages);
 
   return (
     <Box>

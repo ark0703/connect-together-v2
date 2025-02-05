@@ -67,94 +67,96 @@ export default function Login() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        mt: 8,
-        p: 4,
-        borderRadius: 2,
-        boxShadow: 3,
-        bgcolor: "background.paper",
-      }}
-    >
-      {/* lOGO */}
+    !loading && (
       <Box
         sx={{
-          mb: 2,
-          width: { xs: "50%", sm: "40%", md: "30%", lg: "25%" },
           display: "flex",
-          justifyContent: "center",
+          flexDirection: "column",
+          alignItems: "center",
+          mt: 8,
+          p: 4,
+          borderRadius: 2,
+          boxShadow: 3,
+          bgcolor: "background.paper",
         }}
       >
-        <img
-          src={Logo}
-          alt="Logo"
-          style={{ maxWidth: "100%", height: "auto" }}
-        />
-      </Box>
-
-      {/* Header Text */}
-      <Box sx={{ mb: 2, width: "80%" }}>
-        <Typography
-          variant="h5"
-          fontWeight="bold"
+        {/* lOGO */}
+        <Box
           sx={{
-            fontSize: {
-              xs: "1.5rem",
-              sm: "2rem",
-              md: "2.5rem",
-              lg: "3rem",
-            },
-            width: "100%", // Ensures it takes up available width
-            textAlign: "center", // Centers text if needed
+            mb: 2,
+            width: { xs: "50%", sm: "40%", md: "30%", lg: "25%" },
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          Update Your Password
+          <img
+            src={Logo}
+            alt="Logo"
+            style={{ maxWidth: "100%", height: "auto" }}
+          />
+        </Box>
+
+        {/* Header Text */}
+        <Box sx={{ mb: 2, width: "80%" }}>
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            sx={{
+              fontSize: {
+                xs: "1.5rem",
+                sm: "2rem",
+                md: "2.5rem",
+                lg: "3rem",
+              },
+              width: "100%", // Ensures it takes up available width
+              textAlign: "center", // Centers text if needed
+            }}
+          >
+            Update Your Password
+          </Typography>
+        </Box>
+
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+          {/* Passwords Fields */}
+          <TextField
+            error={passwordError.status}
+            helperText={passwordError.message}
+            fullWidth
+            label="Password"
+            type="password"
+            variant="outlined"
+            margin="normal"
+            onChange={(e) => setPassword(e.target.value.trim())}
+            required
+          />
+          <TextField
+            error={passwordError.status}
+            helperText={passwordError.message}
+            fullWidth
+            label=" Confirm Password"
+            type="password"
+            variant="outlined"
+            margin="normal"
+            onChange={(e) => setConPassword(e.target.value.trim())}
+            required
+          />
+
+          {/* update-password Button */}
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2, py: 1 }}
+            type="submit"
+          >
+            Update Password
+          </Button>
+        </form>
+
+        {/* Error Message */}
+        <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+          {error}
         </Typography>
       </Box>
-
-      <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-        {/* Passwords Fields */}
-        <TextField
-          error={passwordError.status}
-          helperText={passwordError.message}
-          fullWidth
-          label="Password"
-          type="password"
-          variant="outlined"
-          margin="normal"
-          onChange={(e) => setPassword(e.target.value.trim())}
-          required
-        />
-        <TextField
-          error={passwordError.status}
-          helperText={passwordError.message}
-          fullWidth
-          label=" Confirm Password"
-          type="password"
-          variant="outlined"
-          margin="normal"
-          onChange={(e) => setConPassword(e.target.value.trim())}
-          required
-        />
-
-        {/* update-password Button */}
-        <Button
-          fullWidth
-          variant="contained"
-          sx={{ mt: 2, py: 1 }}
-          type="submit"
-        >
-          Update Password
-        </Button>
-      </form>
-
-      {/* Error Message */}
-      <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-        {error}
-      </Typography>
-    </Box>
+    )
   );
 }

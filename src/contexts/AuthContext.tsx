@@ -81,6 +81,8 @@ export default function AuthContextProvider({
           setIsLoggedIn(true);
           getUser();
         } else {
+          console.log(event);
+
           setIsLoggedIn(false);
           setUser(null);
         }

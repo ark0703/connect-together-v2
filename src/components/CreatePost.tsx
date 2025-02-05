@@ -37,6 +37,7 @@ export default function CreatePostPopup({
   ) => {
     if (newType) {
       setPostType(newType);
+      console.log(event.target);
     }
   };
 

@@ -47,97 +47,99 @@ export default function Login() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        mt: 8,
-        p: 4,
-        borderRadius: 2,
-        boxShadow: 3,
-        bgcolor: "background.paper",
-      }}
-    >
-      {/* lOGO */}
+    !loading && (
       <Box
         sx={{
-          mb: 2,
-          width: { xs: "50%", sm: "40%", md: "30%", lg: "25%" },
           display: "flex",
-          justifyContent: "center",
+          flexDirection: "column",
+          alignItems: "center",
+          mt: 8,
+          p: 4,
+          borderRadius: 2,
+          boxShadow: 3,
+          bgcolor: "background.paper",
         }}
       >
-        <img
-          src={Logo}
-          alt="Logo"
-          style={{ maxWidth: "100%", height: "auto" }}
-        />
-      </Box>
-
-      {/* Header Text */}
-      <Box sx={{ mb: 2, width: "80%" }}>
-        <Typography
-          variant="h5"
-          fontWeight="bold"
+        {/* lOGO */}
+        <Box
           sx={{
-            fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem", lg: "3rem" },
-            width: "100%", // Ensures it takes up available width
-            textAlign: "center", // Centers text if needed
+            mb: 2,
+            width: { xs: "50%", sm: "40%", md: "30%", lg: "25%" },
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          Enter email to recieve a reset password link
-        </Typography>
+          <img
+            src={Logo}
+            alt="Logo"
+            style={{ maxWidth: "100%", height: "auto" }}
+          />
+        </Box>
+
+        {/* Header Text */}
+        <Box sx={{ mb: 2, width: "80%" }}>
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            sx={{
+              fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem", lg: "3rem" },
+              width: "100%", // Ensures it takes up available width
+              textAlign: "center", // Centers text if needed
+            }}
+          >
+            Enter email to recieve a reset password link
+          </Typography>
+        </Box>
+
+        {/* Email & Password Fields */}
+        <Box component="form" width="100%" onSubmit={handleSubmit}>
+          <TextField
+            error={emailError.status}
+            helperText={emailError.message}
+            fullWidth
+            label="Email address"
+            variant="outlined"
+            margin="normal"
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          {/* Sign-in Button */}
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2, py: 1 }}
+            type="submit"
+          >
+            Get Link
+          </Button>
+
+          {/* Error Message */}
+          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
+
+          {/* Divider */}
+          <Divider sx={{ my: 3 }}>Or </Divider>
+
+          {/* Signup Link */}
+          <Typography textAlign="center" mt={3}>
+            get back to{" "}
+            <Link to={"/login"} style={{ textDecoration: "none" }}>
+              <Typography
+                component="span"
+                color="primary"
+                sx={{
+                  cursor: "pointer",
+                  underline: "none",
+                }}
+              >
+                SignIn Page{" "}
+              </Typography>
+            </Link>
+          </Typography>
+        </Box>
       </Box>
-
-      {/* Email & Password Fields */}
-      <Box component="form" width="100%" onSubmit={handleSubmit}>
-        <TextField
-          error={emailError.status}
-          helperText={emailError.message}
-          fullWidth
-          label="Email address"
-          variant="outlined"
-          margin="normal"
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        {/* Sign-in Button */}
-        <Button
-          fullWidth
-          variant="contained"
-          sx={{ mt: 2, py: 1 }}
-          type="submit"
-        >
-          Get Link
-        </Button>
-
-        {/* Error Message */}
-        <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-          {error}
-        </Typography>
-
-        {/* Divider */}
-        <Divider sx={{ my: 3 }}>Or </Divider>
-
-        {/* Signup Link */}
-        <Typography textAlign="center" mt={3}>
-          get back to{" "}
-          <Link to={"/login"} style={{ textDecoration: "none" }}>
-            <Typography
-              component="span"
-              color="primary"
-              sx={{
-                cursor: "pointer",
-                underline: "none",
-              }}
-            >
-              SignIn Page{" "}
-            </Typography>
-          </Link>
-        </Typography>
-      </Box>
-    </Box>
+    )
   );
 }
