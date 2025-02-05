@@ -1,79 +1,146 @@
-import { Box, Button, TextareaAutosize, TextField } from "@mui/material";
-import UploadImage from "./UploadImage";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+  TextareaAutosize,
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
+import UploadImage from "./UploadImage";
 import supabase from "../utils/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { PostType, PostUserType } from "../types/types";
 
-export default function CreatePost() {
+interface CreatePostPopupProps {
+  open: boolean;
+  handleClose: () => void;
+}
+
+export default function CreatePostPopup({
+  open,
+  handleClose,
+}: CreatePostPopupProps) {
   const [images, setImages] = useState<File[]>([]);
-  const [title, setTitle] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [postType, setPostType] = useState<string>("post");
 
   const { user } = useAuth();
 
+  const handlePostTypeChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newType: string | null
+  ) => {
+    if (newType) {
+      setPostType(newType);
+    }
+  };
+
+  const handlePost = async () => {
+    if (!user) {
+      console.error("User not logged in");
+      return;
+    }
+
+    try {
+      const uploadedImages = await Promise.all(
+        images.map(async (image) => {
+          // Sanitize file name (remove special characters)
+          const sanitizedFileName = image.name.replace(/[^a-zA-Z0-9_.-]/g, ""); // Remove invalid characters
+          const filePath = `public/${Date.now()}_${sanitizedFileName}`;
+
+          const { data, error } = await supabase.storage
+            .from("posts") // Make sure the bucket name is correct
+            .upload(filePath, image);
+
+          if (error) throw error;
+          return data?.fullPath;
+        })
+      );
+
+      const newPost: PostType = {
+        id: Date.now(),
+        description: description,
+        created_at: new Date().toISOString(),
+        media: uploadedImages,
+        user_id: user.id, // Assigning the entire user object
+        is_publishes: true,
+        type: "post",
+        title: title,
+      };
+
+      await supabase.from("posts").insert([newPost]);
+
+      setTitle("");
+      setImages([]);
+      handleClose();
+    } catch (error) {
+      console.error("Error uploading post:", error);
+    }
+  };
+
   return (
-    <Box>
-      <UploadImage images={images} setImages={setImages} maxImages={5} />
-      <TextareaAutosize
-        minRows={3}
-        maxRows={10}
-        placeholder="What's on your mind?"
-        style={{ width: "100%", fontSize: "1.1rem", padding: "1rem" }}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={(e) => {
-          e.preventDefault();
-          console.log({ title, images });
-
-          if (!user) {
-            console.error("User not logged in");
-            return;
-          }
-
-          Promise.all(
-            images.map((image) => {
-              const filePath = `public/${
-                // @ts-ignore
-                new Date().getTime() + "_" + image.name.replaceAll(" ", "_")
-              }`;
-              return supabase.storage.from("posts").upload(filePath, image);
-            })
-          ).then((res) => {
-            const errors = res.filter((r) => r.error);
-            if (errors.length) {
-              console.error(errors);
-              return;
-            }
-
-            const files = res
-              .map((r) => r.data?.fullPath)
-              .filter((path): path is string => !!path);
-
-            supabase
-              .from("posts")
-              .insert([
-                {
-                  media: files, // assuming you want to store image names
-                  user_id: user.id, // replace with actual user_id
-                  description: title,
-                  type: "post",
-                },
-              ])
-              .then(({ data, error }) => {
-                if (error) {
-                  console.error(error);
-                  return;
-                }
-                console.log(data);
-              });
-          });
-        }}
-      >
-        Post
-      </Button>
-    </Box>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle>Create a Post</DialogTitle>
+      <DialogContent>
+        <Box display="flex" justifyContent="center" mb={2}>
+          <ToggleButtonGroup
+            value={postType}
+            exclusive
+            onChange={handlePostTypeChange}
+            aria-label="post type"
+          >
+            <ToggleButton value="job" aria-label="job">
+              Job
+            </ToggleButton>
+            <ToggleButton value="event" aria-label="event">
+              Event
+            </ToggleButton>
+            <ToggleButton value="others" aria-label="others">
+              Others
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+        <UploadImage images={images} setImages={setImages} maxImages={5} />
+        <TextareaAutosize
+          minRows={1}
+          maxRows={3}
+          placeholder="Enter Title"
+          style={{
+            width: "100%",
+            fontSize: "1rem",
+            padding: "1rem",
+            marginTop: "1rem",
+          }}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <TextareaAutosize
+          minRows={3}
+          maxRows={10}
+          placeholder="What's on your mind?"
+          style={{
+            width: "100%",
+            fontSize: "1.1rem",
+            padding: "1rem",
+            marginTop: "1rem",
+          }}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} color="secondary">
+          Cancel
+        </Button>
+        <Button onClick={handlePost} variant="contained" color="primary">
+          Post
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

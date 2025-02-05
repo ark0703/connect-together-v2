@@ -1,23 +1,43 @@
-import { Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import Router from "./components/Router";
 import { useAuth } from "./contexts/AuthContext";
 import LinearLoader from "./components/LinearLoader";
+import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
+import Navbar from "./components/PagesComponent/Navbar";
+import React from "react";
 
-function App() {
-  const { loading } = useAuth();
+export default function App() {
+  const { loading, user } = useAuth();
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   if (loading) {
     return (
-      <Box height={"100dvh"} width={"100dvw"}>
+      <Box height="100vh" width="100vw">
         <LinearLoader />
       </Box>
     );
   }
+
   return (
-    <Box maxWidth="96rem" margin={"0 auto"}>
-      <Router />
+    <Box height="100vh" display="flex" flexDirection="column">
+      <Container
+        ref={containerRef}
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
+        {user && !/^\/messages\/[^/]+$/.test(window.location.pathname) && (
+          <Navbar />
+        )}
+        <Router />
+      </Container>
+
+      {user && !/^\/messages\/[^/]+$/.test(window.location.pathname) && (
+        <FloatingMessageButton />
+      )}
     </Box>
   );
 }
-
-export default App;

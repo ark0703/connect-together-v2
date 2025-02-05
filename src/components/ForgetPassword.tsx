@@ -16,25 +16,24 @@ import { Link, useNavigate } from "react-router";
 import Logo from "../assets/logo.svg";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import { option } from "motion/react-client";
 
 export default function Login() {
+  const url = window.location.origin;
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState({ status: false, message: "" });
-  const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState({
-    status: false,
-    message: "",
-  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     console.log("Logging in");
 
     if (email === "" || !new RegExp(/.+@.+\..+/).test(email)) {
+      console.log("Please enter a valid email");
+
       setEmailError({
         status: true,
         message: `${
@@ -49,36 +48,16 @@ export default function Login() {
       return;
     }
     setEmailError({ status: false, message: "" });
-    if (password === "" || password.length < 8) {
-      setPasswordError({
-        status: true,
-        message: `${
-          password === ""
-            ? "Password is required"
-            : password.length < 8
-            ? "Password must contain atleast 8 charcters"
-            : password.length > 25
-            ? "Password must contain at most 25 characters"
-            : ""
-        }`,
-      });
-      setLoading(false);
-      return;
-    }
-    setPasswordError({ status: false, message: "" });
-    supabase.auth.signInWithPassword({ email, password }).then(({ error }) => {
-      if (error) {
-        console.error(error);
-
-        if (error.code === "invalid_credentials") {
-          setError("Invalid email or password");
+    await supabase.auth
+      .resetPasswordForEmail(email, { redirectTo: `${url}/update-password` })
+      .then(({ error }) => {
+        if (error) {
+          console.error(error);
+          setError("Failed to send password reset email");
+          return;
         }
-        return;
-      }
-      navigate("/home");
-      setLoading(false);
-      console.log("Logged in");
-    });
+        setError("Password reset email sent successfully. Check your inbox.");
+      });
   };
 
   return (
@@ -121,7 +100,7 @@ export default function Login() {
             textAlign: "center", // Centers text if needed
           }}
         >
-          Sign in to your account
+          Enter email to recieve a reset password link
         </Typography>
       </Box>
 
@@ -137,38 +116,6 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <TextField
-          error={passwordError.status}
-          helperText={passwordError.message}
-          fullWidth
-          label="Password"
-          type="password"
-          variant="outlined"
-          margin="normal"
-          onChange={(e) => setPassword(e.target.value.trim())}
-          required
-        />
-
-        {/* Remember me & Forgot password */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            my: 1,
-          }}
-        >
-          <FormControlLabel control={<Checkbox />} label="Remember me" />
-          <Link to="/forgot-password">
-            <Typography
-              variant="body2"
-              color="primary"
-              sx={{ cursor: "pointer" }}
-            >
-              Forgot password?
-            </Typography>
-          </Link>
-        </Box>
 
         {/* Sign-in Button */}
         <Button
@@ -177,7 +124,7 @@ export default function Login() {
           sx={{ mt: 2, py: 1 }}
           type="submit"
         >
-          Sign in
+          Get Link
         </Button>
 
         {/* Error Message */}
@@ -186,30 +133,12 @@ export default function Login() {
         </Typography>
 
         {/* Divider */}
-        <Divider sx={{ my: 3 }}>Or continue with</Divider>
-
-        {/* OAuth Buttons */}
-        <Stack direction="row" spacing={2} justifyContent="center">
-          <Button
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            sx={{ width: "50%" }}
-          >
-            Google
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<GitHubIcon />}
-            sx={{ width: "50%" }}
-          >
-            GitHub
-          </Button>
-        </Stack>
+        <Divider sx={{ my: 3 }}>Or </Divider>
 
         {/* Signup Link */}
         <Typography textAlign="center" mt={3}>
-          Not a member?{" "}
-          <Link to={"/register"} style={{ textDecoration: "none" }}>
+          get back to{" "}
+          <Link to={"/login"} style={{ textDecoration: "none" }}>
             <Typography
               component="span"
               color="primary"
@@ -218,7 +147,7 @@ export default function Login() {
                 underline: "none",
               }}
             >
-              SignUp now{" "}
+              SignIn Page{" "}
             </Typography>
           </Link>
         </Typography>

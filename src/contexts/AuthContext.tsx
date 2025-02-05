@@ -35,46 +35,62 @@ export default function AuthContextProvider({
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   const getUser = useDebounce(() => {
-    supabase.auth.getUser().then(({ error, data: { user } }) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
-      if (!user) {
-        setUser(null);
-        return;
-      }
-      supabase
-        .from("users")
-        .select("*")
-        .eq("uuid", user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (error) {
-            console.error(error);
-            return;
-          }
-          setUser(data);
-        });
-    });
+    try {
+      supabase.auth.getUser().then(async ({ error, data: { user } }) => {
+        if (error) {
+          console.error(error);
+          return;
+        }
+        if (!user) {
+          setUser(null);
+          return;
+        }
+
+        const { data, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("uuid", user.id)
+          .single();
+
+        if (userError) {
+          console.error("Error fetching user data:", userError.message);
+          return;
+        }
+
+        console.log(data);
+        setUser(data);
+
+        // Update is_online status when fetching user
+        await supabase
+          .from("users")
+          .update({
+            is_online: true,
+            last_seen: new Date().toISOString(), // Ensures a recent timestamp
+          })
+          .eq("uuid", user.id);
+      });
+    } catch (e) {
+      console.error(e);
+    }
   });
 
   useEffect(() => {
-    // Check if user is logged in
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setIsLoggedIn(true);
-        // If user is logged in, get user profile
-        getUser();
-      } else {
-        // If user is not logged in, set user to null
-        setUser(null);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setIsLoggedIn(true);
+          getUser();
+        } else {
+          setIsLoggedIn(false);
+          setUser(null);
+        }
       }
-    });
+    );
 
+    // Check if user is already logged in when the component mounts
     supabase.auth.getUser().then(({ error, data: { user } }) => {
       if (error) {
-        console.error(error);
+        console.error("Error fetching user:", error);
       }
       if (user) {
         setIsLoggedIn(true);
@@ -83,16 +99,51 @@ export default function AuthContextProvider({
       setLoading(false);
     });
 
-    // If user is logged in, setUser
+    // Cleanup function to prevent memory leaks
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    const updateOfflineStatus = async () => {
+      if (user) {
+        await supabase
+          .from("users")
+          .update({
+            is_online: false,
+            last_seen: new Date().toISOString(),
+          })
+          .eq("uuid", user.uuid);
+      }
+    };
+
+    window.addEventListener("beforeunload", updateOfflineStatus);
+
+    return () => {
+      updateOfflineStatus();
+      window.removeEventListener("beforeunload", updateOfflineStatus);
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
-        signOut: () => {
-          supabase.auth.signOut();
+        signOut: async () => {
+          if (user) {
+            await supabase
+              .from("users")
+              .update({
+                is_online: false,
+                last_seen: new Date().toISOString(),
+              })
+              .eq("uuid", user.uuid);
+          }
+          await supabase.auth.signOut();
+          setUser(null);
+          setIsLoggedIn(false);
         },
         isLoggedIn: isLoggedIn,
       }}

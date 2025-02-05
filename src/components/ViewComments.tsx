@@ -5,35 +5,83 @@ import { Box, Typography } from "@mui/material";
 import moment from "moment";
 import AddComment from "./AddComment";
 
-export default function ViewComments({ postId }: { postId: number }) {
+export default function ViewComments({
+  postId,
+  onCommentAdded,
+}: {
+  postId: number;
+  onCommentAdded: () => void;
+}) {
   const [comments, setComments] = useState<CommentUserType[]>([]);
 
   useEffect(() => {
-    // Fetch comments from database
-    supabase
+    const fetchComments = async () => {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*, user_id(*)")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setComments(data);
+    };
+
+    fetchComments();
+  }, [postId]);
+
+  const handleCommentAdded = async () => {
+    const { data, error } = await supabase
       .from("comments")
       .select("*, user_id(*)")
       .eq("post_id", postId)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-        setComments(data);
-      });
-  }, []);
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setComments(data);
+    onCommentAdded();
+  };
 
   return (
-    <Box>
-      {comments.map((comment) => (
-        <Box key={comment.id}>
-          <Typography>{comment.comment}</Typography>
-          <Typography>
-            {moment(comment.created_at).fromNow()} by {comment.user_id.username}
-          </Typography>
+    <Box p={2}>
+      {comments.length > 0 ? (
+        <Box
+          sx={{
+            maxHeight: comments.length > 3 ? 200 : "auto", // Scroll only if more than 3 comments
+            overflowY: comments.length > 3 ? "auto" : "visible",
+            border: comments.length > 3 ? "1px solid #ddd" : "none",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          {comments.map((comment) => (
+            <Box
+              key={comment.id}
+              sx={{ mb: 1, p: 1, borderBottom: "1px solid #ddd" }}
+            >
+              <Typography variant="body2">{comment.comment}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {moment(comment.created_at).fromNow()} by{" "}
+                {comment.user_id.username}
+              </Typography>
+            </Box>
+          ))}
         </Box>
-      ))}
-      <AddComment postId={postId} />
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No comments yet. Be the first to comment!
+        </Typography>
+      )}
+
+      {/* Add Comment Section */}
+      <AddComment postId={postId} onCommentAdded={handleCommentAdded} />
     </Box>
   );
 }

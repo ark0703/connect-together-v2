@@ -1,190 +1,260 @@
+import { useEffect, useState } from "react";
 import {
-  Autocomplete,
   Box,
   Button,
-  FormControl,
-  FormGroup,
-  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
   Typography,
+  Paper,
+  TextField,
+  MenuItem,
 } from "@mui/material";
-import { useState } from "react";
-import { UserType } from "../types/types";
-import { Checkbox, FormControlLabel } from "@mui/material";
+import { useAuth } from "../contexts/AuthContext";
 import supabase from "../utils/supabase";
 
-export default function CreateUserProfile() {
-  const [user, setUser] = useState<UserType>({
-    id: 0,
-    first_name: "",
-    last_name: "",
-    phone: "",
-    department: "",
-    course: "",
-    username: "",
-    college: "pathkarvarde",
-    batch: "",
-    can_post: false,
-    uuid: "",
-    status: false,
-    created_at: "",
-    email: "",
-    is_alimony: false,
-    profile_pic: null,
-  });
+export default function UserProfile() {
+  const { user: authUser } = useAuth();
 
-  const handleSubmit = () => {
-    supabase.auth.getUser().then(({ data: { user: sbUser }, error }) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
+  interface User {
+    batch: string;
+    can_post: boolean;
+    college: string;
+    course: string;
+    created_at: string;
+    department: string;
+    email: string;
+    first_name: string;
+    id: number;
+    is_alimony: boolean;
+    is_online: boolean | null;
+    last_name: string | null;
+    phone: string;
+    status: boolean;
+    uuid: string;
+    username: string;
+  }
 
-      if (!sbUser) {
-        console.error("User not found");
-        return;
-      }
+  const [user, setUser] = useState<User | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState<Partial<User>>({});
+  const [customDepartment, setCustomDepartment] = useState("");
 
-      supabase
-        .from("users")
-        .insert([
+  const departments = ["CSE", "ECE", "ME", "CE", "Other"];
+
+  useEffect(() => {
+    if (!authUser) return;
+
+    supabase
+      .from("users")
+      .select("*")
+      .eq("uuid", authUser.uuid)
+      .single()
+      .then(({ data, error }) => {
+        if (error) console.error(error);
+        else {
+          setUser(data);
+          setFormData(data);
+        }
+      });
+  }, [authUser]);
+
+  const handleUpdateClick = () => setEditing(true);
+
+  const handleChange = (field: keyof User, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!authUser) return;
+
+    const updateData = { ...formData };
+    if (updateData.department === "Other") {
+      updateData.department = customDepartment;
+    }
+
+    const { error } = user
+      ? await supabase
+          .from("users")
+          .update(updateData)
+          .eq("uuid", authUser.uuid)
+      : await supabase.from("users").insert([
           {
-            first_name: user.first_name,
-            last_name: user.last_name,
-            phone: user.phone,
-            department: user.department,
-            course: user.course,
-            username: user.username,
-            college: user.college,
-            batch: user.batch,
-            can_post: user.can_post,
-            uuid: sbUser.id,
-            status: user.status,
-            email: sbUser.email ?? "",
-            is_alimony: user.is_alimony,
-            profile_pic: user.profile_pic,
+            ...updateData,
+            uuid: authUser.uuid,
+            batch: "",
+            course: "",
+            department: "",
+            email: "",
+            first_name: "",
+            last_name: "",
+            phone: "",
+            status: true,
+            username: "",
+            is_alimony: false,
           },
-        ])
-        .then(({ data, error }) => {
-          if (error) {
-            console.error(error);
-            return;
-          }
-          window.location.reload();
-          console.log(data);
-        });
-    });
+        ]);
+
+    if (error) {
+      console.error(error);
+    } else {
+      setUser(updateData as User);
+      setEditing(false);
+    }
   };
 
   return (
-    <Box>
-      <Typography variant="h1">Create User Profile</Typography>
+    <Box
+      p={4}
+      sx={{ width: "100%", display: "flex", justifyContent: "center" }}
+    >
+      <Box sx={{ maxWidth: { xs: "100%", md: "900px" }, width: "100%" }}>
+        <Typography variant="h5" gutterBottom>
+          Applicant Information
+        </Typography>
+        <Typography color="text.secondary" gutterBottom>
+          Personal details and application.
+        </Typography>
+        <TableContainer
+          component={Paper}
+          sx={{ width: "100%", overflowX: "auto" }}
+        >
+          <Table>
+            <TableBody>
+              {[
+                { label: "First Name", key: "first_name", editable: true },
+                { label: "Last Name", key: "last_name", editable: true },
+                { label: "Email Address", key: "email", editable: false },
+                { label: "Username", key: "username", editable: false },
+                { label: "Phone", key: "phone", editable: true },
+                { label: "College", key: "college", editable: true },
+                { label: "Course", key: "course", editable: true },
+                { label: "Batch", key: "batch", editable: true },
+              ].map(({ label, key, editable }) => (
+                <TableRow key={key}>
+                  <TableCell>
+                    <b>{label}</b>
+                  </TableCell>
+                  <TableCell>
+                    {editing && editable ? (
+                      <TextField
+                        fullWidth
+                        value={formData[key as keyof User] || ""}
+                        onChange={(e) =>
+                          handleChange(key as keyof User, e.target.value)
+                        }
+                      />
+                    ) : (
+                      user?.[key as keyof User] || "—"
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
 
-      <FormGroup>
-        <FormControl>
-          <TextField
-            label="First Name"
-            variant="outlined"
-            fullWidth
-            required
-            value={user.first_name}
-            onChange={(e) => setUser({ ...user, first_name: e.target.value })}
-          />
-        </FormControl>
-        <FormControl>
-          <TextField
-            label="Last Name"
-            variant="outlined"
-            fullWidth
-            required
-            value={user.last_name}
-            onChange={(e) => setUser({ ...user, last_name: e.target.value })}
-          />
-        </FormControl>
-        <FormControl>
-          <TextField
-            label="Phone"
-            variant="outlined"
-            fullWidth
-            required
-            value={user.phone}
-            onChange={(e) => setUser({ ...user, phone: e.target.value })}
-          />
-        </FormControl>
+              {/* Are You an Alimony (Dropdown) */}
+              <TableRow>
+                <TableCell>
+                  <b>Are you an alimony?</b>
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <TextField
+                      select
+                      fullWidth
+                      value={
+                        formData.is_alimony !== undefined
+                          ? String(formData.is_alimony)
+                          : ""
+                      }
+                      onChange={(e) =>
+                        handleChange("is_alimony", e.target.value === "true")
+                      }
+                    >
+                      <MenuItem value="true">Yes</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
+                    </TextField>
+                  ) : user?.is_alimony ? (
+                    "Yes"
+                  ) : (
+                    "No"
+                  )}
+                </TableCell>
+              </TableRow>
 
-        <FormControl>
-          <TextField
-            label="Username"
-            variant="outlined"
-            fullWidth
-            required
-            value={user.username}
-            onChange={(e) => setUser({ ...user, username: e.target.value })}
-          />
-        </FormControl>
-        <FormControl>
-          <Autocomplete
-            options={["CSE", "ECE", "ME", "CE"]}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Department"
-                variant="outlined"
-                required
-              />
-            )}
-            value={user.department}
-            onChange={(_, value) =>
-              setUser({ ...user, department: value ?? "" })
-            }
-          />
-        </FormControl>
-        <FormControl>
-          <TextField
-            label="Course"
-            variant="outlined"
-            fullWidth
-            required
-            value={user.course}
-            onChange={(e) => setUser({ ...user, course: e.target.value })}
-          />
-        </FormControl>
-        <FormControl>
-          <Autocomplete
-            options={new Array(new Date().getFullYear() - 1970)
-              .fill(0)
-              .map((_, i) => `${i + 1970}`)
-              .reverse()}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Batch"
-                variant="outlined"
-                required
-              />
-            )}
-            value={user.batch}
-            onChange={(_, value) => setUser({ ...user, batch: value ?? "" })}
-          />
-        </FormControl>
-        <FormControl>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={user.is_alimony}
-                onChange={(e) =>
-                  setUser({ ...user, is_alimony: e.target.checked })
-                }
-              />
-            }
-            label="Are you an alimony?"
-          />
-        </FormControl>
-      </FormGroup>
+              {/* Department Dropdown */}
+              <TableRow>
+                <TableCell>
+                  <b>Department</b>
+                </TableCell>
+                <TableCell>
+                  {editing ? (
+                    <>
+                      <TextField
+                        select
+                        fullWidth
+                        value={formData.department || ""}
+                        onChange={(e) =>
+                          handleChange("department", e.target.value)
+                        }
+                      >
+                        {departments.map((dept) => (
+                          <MenuItem key={dept} value={dept}>
+                            {dept}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      {formData.department === "Other" && (
+                        <TextField
+                          fullWidth
+                          placeholder="Enter Department"
+                          value={customDepartment}
+                          onChange={(e) => setCustomDepartment(e.target.value)}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    user?.department || "—"
+                  )}
+                </TableCell>
+              </TableRow>
 
-      <Box mt={2}>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Submit
-        </Button>
+              {/* Buttons */}
+              {user ? (
+                <TableRow>
+                  <TableCell colSpan={2} align="right">
+                    {editing ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSubmit}
+                      >
+                        Save Changes
+                      </Button>
+                    ) : (
+                      <Button variant="outlined" onClick={handleUpdateClick}>
+                        Update
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={2} align="right">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                    >
+                      Submit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
     </Box>
   );
