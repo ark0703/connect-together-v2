@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { Box, Card, Typography, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 import PostCard from "../components/PagesComponent/PostCard";
 import supabase from "../utils/supabase";
-import { PostLikeUserType, PostUserType } from "../types/types";
-import readImage from "../utils/readImage";
-import moment from "moment";
+import { PostLikeUserType } from "../types/types";
 
 const FeedPage = () => {
   const { type } = useParams<{ type: string }>();

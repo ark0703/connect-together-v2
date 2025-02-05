@@ -1,18 +1,7 @@
-import {
-  Box,
-  Button,
-  Checkbox,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import supabase from "../utils/supabase";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import Logo from "../assets/logo.svg";
 
 export default function Login() {

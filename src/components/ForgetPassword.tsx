@@ -1,22 +1,8 @@
-import {
-  Box,
-  Button,
-  Checkbox,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Divider, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import supabase from "../utils/supabase";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import Logo from "../assets/logo.svg";
-import GoogleIcon from "@mui/icons-material/Google";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import { option } from "motion/react-client";
 
 export default function Login() {
   const url = window.location.origin;
