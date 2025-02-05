@@ -16,14 +16,22 @@ type UserIDType = {
 
 type LikeUserType = LikeType & UserIDType;
 
+type CommentUserType = CommentType & UserIDType;
+
 type PostLikesType = {
   likes: LikeUserType[];
 };
 
+export type PostCommentLikesType = {
+  comments: CommentUserType[];
+};
+
 export type PostUserType = PostType & UserIDType;
 
-export type PostLikeUserType = PostUserType & PostLikesType;
+export type PostLikeUserType = PostUserType &
+  PostLikesType &
+  PostCommentLikesType;
 
-export type CommentUserType = CommentType & UserIDType;
+export type PostCommentUserType = CommentType & UserIDType;
 
 export type MessageUserType = MessageType & UserIDType;

@@ -16,7 +16,7 @@ const FeedPage = () => {
     // Fetch posts from database
     supabase
       .from("posts")
-      .select("*, user_id(*), likes(*, user_id(*))")
+      .select("*, user_id(*), likes(*, user_id(*)), comments(*, user_id(*))")
       .order("created_at", { ascending: false })
       .range(0, 19)
       .then(({ data, error }) => {
