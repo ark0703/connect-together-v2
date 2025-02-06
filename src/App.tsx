@@ -5,8 +5,6 @@ import LinearLoader from "./components/LinearLoader";
 import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
 import Navbar from "./components/PagesComponent/Navbar";
 import { useLocation } from "react-router";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-
 export default function App() {
   const { loading, user } = useAuth();
   const location = useLocation(); // Get current route
@@ -26,7 +24,6 @@ export default function App() {
     <Box height="100vh" display="flex" flexDirection="column">
       {user && !hideComponents && <Navbar />}
       <Router />
-      <SpeedInsights />
       {user && !hideComponents && <FloatingMessageButton />}
     </Box>
   );
