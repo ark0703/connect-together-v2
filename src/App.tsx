@@ -1,4 +1,4 @@
-import { Box, Container } from "@mui/material";
+import { Box } from "@mui/material";
 import Router from "./components/Router";
 import { useAuth } from "./contexts/AuthContext";
 import LinearLoader from "./components/LinearLoader";
@@ -6,12 +6,10 @@ import FloatingMessageButton from "./components/PagesComponent/FloatingMessageBu
 import Navbar from "./components/PagesComponent/Navbar";
 import { useLocation } from "react-router";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import React from "react";
 
 export default function App() {
   const { loading, user } = useAuth();
   const location = useLocation(); // Get current route
-  const containerRef = React.useRef<HTMLDivElement>(null);
 
   if (loading) {
     return (
