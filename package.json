@@ -27,7 +27,6 @@
     "@eslint/js": "^9.19.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
-    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "eslint": "^9.19.0",
     "eslint-plugin-react-hooks": "^5.1.0",
