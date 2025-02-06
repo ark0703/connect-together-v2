@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import supabase from "../utils/supabase";
-import { UserType } from "../types/types";
+import { UserType, MessageType, MessageUserType } from "../types/types";
 import {
   Avatar,
   Box,
   Button,
   Card,
   CardContent,
+  Container,
+  Divider,
   List,
   ListItem,
   ListItemAvatar,
@@ -18,113 +20,197 @@ import { Link } from "react-router";
 import ProfileSearchModal from "../Modal/ProfileSearchModal";
 
 export default function MessageList() {
-  const [recentMessages, setRecentMessages] = useState<UserType[]>([]);
+  const [recentMessages, setRecentMessages] = useState<
+    (UserType & { latestMessage?: MessageType })[]
+  >([]);
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchUsers = async () => {
-      const { data, error } = await supabase
+    const fetchUsersWithMessages = async () => {
+      const { data: users, error: userError } = await supabase
         .from("users")
         .select("*")
         .neq("id", user.id);
 
-      if (error) {
-        console.error(error);
-      } else {
-        setRecentMessages(data);
+      if (userError) {
+        console.error(userError);
+        return;
       }
+
+      const { data: messages, error: messageError } = await supabase
+        .from("message")
+        .select("*")
+        .or(`sent_by.eq.${user.id},sent_to.eq.${user.id}`)
+        .order("created_at", { ascending: false });
+
+      if (messageError) {
+        console.error(messageError);
+        return;
+      }
+
+      const usersWithMessages = users.map((u) => {
+        const latestMessage = messages.find(
+          (m) => m.sent_by === u.id || m.sent_to === u.id
+        );
+        return { ...u, latestMessage };
+      });
+
+      setRecentMessages(usersWithMessages);
     };
 
-    fetchUsers();
+    fetchUsersWithMessages();
 
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel("realtime-users")
+    // Subscribe to real-time message updates
+    const messageSubscription = supabase
+      .channel("realtime-messages")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "users" },
+        { event: "*", schema: "public", table: "message" },
         (payload) => {
-          setRecentMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
-            )
-          );
+          const newMessage = payload.new as MessageUserType;
+
+          setRecentMessages((prev) => {
+            let found = false;
+            const updatedMessages = prev.map((user) => {
+              if (
+                user.id === newMessage.sent_by ||
+                user.id === newMessage.sent_to
+              ) {
+                found = true;
+                return { ...user, latestMessage: newMessage };
+              }
+              return user;
+            });
+
+            // If message is from a new user, add them to the list
+            if (!found) {
+              return [
+                ...updatedMessages,
+                {
+                  id: newMessage.sent_by,
+                  latestMessage: newMessage,
+                } as UserType & {
+                  latestMessage?: MessageUserType;
+                },
+              ];
+            }
+
+            return updatedMessages;
+          });
         }
       )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(messageSubscription);
     };
   }, [user]);
 
+  // Memoized sorting function for better reactivity
+  const sortedMessages = useMemo(() => {
+    return [...recentMessages].sort((a, b) => {
+      const unreadA = a.latestMessage && !a.latestMessage.is_read;
+      const unreadB = b.latestMessage && !b.latestMessage.is_read;
+
+      if (unreadA && !unreadB) return -1;
+      if (!unreadA && unreadB) return 1;
+
+      return (
+        new Date(b.latestMessage?.created_at || 0).getTime() -
+        new Date(a.latestMessage?.created_at || 0).getTime()
+      );
+    });
+  }, [recentMessages]);
+
   return (
-    <Box>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
-        <Typography variant="h5">Recent Messages</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setSearchOpen(true)}
+    <Container>
+      <Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
         >
-          Search Users
-        </Button>
+          <Typography variant="h5">Recent Messages</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setSearchOpen(true)}
+          >
+            Search Users
+          </Button>
+        </Box>
+        <Card>
+          <CardContent>
+            <List>
+              {sortedMessages.map((messageUser, index) => {
+                const latestMessage = messageUser.latestMessage;
+                const isUnread = latestMessage && !latestMessage.is_read;
+
+                return (
+                  <div key={`message-${messageUser.id}`}>
+                    <ListItem
+                      component={Link}
+                      to={`/messages/${messageUser.username}`}
+                    >
+                      <ListItemAvatar>
+                        <Avatar
+                          src={messageUser.profile_pic || undefined}
+                          alt={`${messageUser.first_name} ${messageUser.last_name}`}
+                        />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            fontWeight={600}
+                            sx={{
+                              color: isUnread ? "primary.main" : "text.primary",
+                            }}
+                          >
+                            {`${messageUser.first_name} ${messageUser.last_name}`}
+                          </Typography>
+                        }
+                        secondary={
+                          latestMessage
+                            ? latestMessage.message.length > 40
+                              ? latestMessage.message.slice(0, 40) + "..."
+                              : latestMessage.message
+                            : "No messages yet"
+                        }
+                      />
+                      <Box textAlign="right">
+                        <Typography variant="body2" color="textSecondary">
+                          {messageUser.course}
+                        </Typography>
+                        {messageUser.is_online ? (
+                          <Typography sx={{ color: "green" }}>
+                            ● Online
+                          </Typography>
+                        ) : (
+                          <Typography sx={{ color: "gray" }}>
+                            Last seen{" "}
+                            {messageUser.last_seen
+                              ? new Date(messageUser.last_seen).toLocaleString()
+                              : "Unknown"}
+                          </Typography>
+                        )}
+                      </Box>
+                    </ListItem>
+                    {index !== sortedMessages.length - 1 && <Divider />}
+                  </div>
+                );
+              })}
+            </List>
+          </CardContent>
+        </Card>
+        <ProfileSearchModal
+          open={searchOpen}
+          onClose={() => setSearchOpen(false)}
+        />
       </Box>
-      <Card>
-        <CardContent>
-          <List>
-            {recentMessages.map((message) => (
-              <ListItem
-                key={`message-${message.id}`}
-                component={Link}
-                to={`/messages/${message.username}`}
-              >
-                <ListItemAvatar>
-                  <Avatar
-                    src={message.profile_pic || undefined}
-                    alt={`${message.first_name} ${message.last_name}`}
-                  />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography
-                      fontWeight={600}
-                    >{`${message.first_name} ${message.last_name}`}</Typography>
-                  }
-                  secondary={`@${message.username}`}
-                />
-                <Box textAlign="right">
-                  <Typography variant="body2" color="textSecondary">
-                    {message.course}
-                  </Typography>
-                  {message.is_online ? (
-                    <Typography sx={{ color: "green" }}>● Online</Typography>
-                  ) : (
-                    <Typography sx={{ color: "gray" }}>
-                      Last seen{" "}
-                      {message.last_seen
-                        ? new Date(message.last_seen).toLocaleString()
-                        : "Unknown"}
-                    </Typography>
-                  )}
-                </Box>
-              </ListItem>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
-      <ProfileSearchModal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
-    </Box>
+    </Container>
   );
 }

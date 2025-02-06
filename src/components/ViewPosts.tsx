@@ -1,50 +1,35 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { PostLikeUserType } from "../types/types";
 import supabase from "../utils/supabase";
-import {
-  Box,
-  Card,
-  CardContent,
-  CardMedia,
-  Avatar,
-  Typography,
-  IconButton,
-  Skeleton,
-  Grid,
-  CircularProgress,
-} from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import moment from "moment";
-import readImage from "../utils/readImage";
-import ViewComments from "./ViewComments";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import PostCard from "./PagesComponent/PostCard";
+import LinearLoader from "./LinearLoader";
 
 export default function ViewPosts() {
   const [posts, setPosts] = useState<PostLikeUserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchingMore, setFetchingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [openComments, setOpenComments] = useState<{ [key: number]: boolean }>(
-    {}
-  );
-  const observer = useRef<IntersectionObserver | null>(null);
+  const hasMoreRef = useRef(true); // Use useRef to track `hasMore`
   const lastPostRef = useRef<HTMLDivElement | null>(null);
-  const LIMIT = 1;
-  const [offset, setOffset] = useState(0);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const LIMIT = 5;
+  const offsetRef = useRef(0);
 
   // Fetch Posts Function
   const fetchPosts = useCallback(async () => {
-    if (!hasMore) return;
-
+    if (!hasMoreRef.current || fetchingMore) return;
     setFetchingMore(true);
+
+    console.log("Fetching posts from offset:", offsetRef.current);
+
     const { data, error } = await supabase
       .from("posts")
-      .select("*, user_id(*), comments(count), likes(count)")
+      .select("*, user_id(*), likes(*, user_id(*)), comments(*, user_id(*))")
       .order("created_at", { ascending: false })
-      .range(offset, offset + LIMIT - 1);
+      .range(offsetRef.current, offsetRef.current + LIMIT - 1);
 
     if (error) {
-      console.error(error);
+      console.error("Error fetching posts:", error);
       setFetchingMore(false);
       return;
     }
@@ -55,157 +40,90 @@ export default function ViewPosts() {
       return Array.from(uniquePosts.values());
     });
 
-    setOffset((prevOffset) => prevOffset + LIMIT);
-    setHasMore(data.length > 0);
-
+    offsetRef.current += LIMIT; // Update offset using useRef
+    hasMoreRef.current = data.length === LIMIT; // Update hasMoreRef
     setFetchingMore(false);
     setLoading(false);
-  }, [offset, hasMore]);
+  }, [fetchingMore]);
 
-  // Fetch initial posts
+  // Initial Fetch
   useEffect(() => {
     fetchPosts();
-  }, [offset]); // Now it fetches new posts when offset updates
+  }, []); // No dependency on offset
 
-  // Infinite Scroll - Observer
+  // Infinite Scroll Observer
   useEffect(() => {
-    if (!hasMore || fetchingMore) return;
+    if (!hasMoreRef.current || fetchingMore) return;
 
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      if (entries[0].isIntersecting) {
-        setOffset((prevOffset) => prevOffset + LIMIT); // Move this outside fetchPosts
-      }
-    };
+    if (observer.current) observer.current.disconnect();
 
-    observer.current = new IntersectionObserver(observerCallback, {
-      root: null,
-      threshold: 1.0,
-    });
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          console.log("Last post is visible, fetching more...");
+          fetchPosts();
+        }
+      },
+      { root: null, threshold: 0.5 } // Trigger when 50% of last post is visible
+    );
 
     if (lastPostRef.current) {
       observer.current.observe(lastPostRef.current);
     }
 
     return () => observer.current?.disconnect();
-  }, [posts, fetchingMore, hasMore]); // Rerun when posts change
+  }, [posts, fetchingMore]); // Ensure observer updates when posts change
 
-  // Toggle comment section visibility
-  const toggleCommentSection = (postId: number) => {
-    setOpenComments((prev) => ({
-      ...prev,
-      [postId]: !prev[postId], // Toggle visibility
-    }));
-  };
+  // Realtime Subscription (Listen for new posts)
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-posts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts" },
+        (payload) => {
+          setPosts((prevPosts) => {
+            const newPost = payload.new as PostLikeUserType;
+            const existingPost = prevPosts.find((p) => p.id === newPost.id);
+            if (!existingPost) {
+              return [newPost, ...prevPosts];
+            }
+            return prevPosts;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
-    <Grid
-      container
-      spacing={2}
+    <Box
       sx={{
-        mt: 2,
-        display: "grid",
-        gridTemplateColumns: "1fr",
-        gap: 2,
+        maxWidth: {
+          xs: "95%", // Full width on extra-small screens
+          sm: "440px", // Small screens
+          md: "620px", // Medium screens
+          lg: "760px", // Large screens
+          xl: "1140px", // Extra-large screens
+        },
+        margin: "auto",
       }}
     >
-      {loading
-        ? [...Array(3)].map((_, index) => (
-            <Grid item xs={12} key={index}>
-              <Card sx={{ borderRadius: "12px", boxShadow: 2 }}>
-                <Skeleton variant="rectangular" height={200} />
-                <CardContent>
-                  <Box display="flex" alignItems="center">
-                    <Skeleton variant="circular" width={40} height={40} />
-                    <Skeleton width="60%" sx={{ ml: 2 }} />
-                  </Box>
-                  <Skeleton width="80%" sx={{ mt: 2 }} />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))
-        : posts.map((post, index) => (
-            <Grid
-              item
-              xs={12}
-              key={`${post.id}-${index}`}
-              ref={index === posts.length - 1 ? lastPostRef : null}
-            >
-              <Card sx={{ borderRadius: "12px", boxShadow: 2 }}>
-                {/* User Info */}
-                <Box display="flex" alignItems="center" p={2}>
-                  <Avatar
-                    src={post.user_id.profile_pic || ""}
-                    alt={post.user_id.username || "User"}
-                  />
-                  <Box ml={2}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {post.user_id?.username || "Unknown User"}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {moment(post.created_at).fromNow()}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Post Media */}
-                {post.media.length > 0 && (
-                  <CardMedia
-                    component="img"
-                    image={readImage(post.media[0])}
-                    alt="Post Media"
-                    sx={{
-                      width: "100%",
-                      height: "auto",
-                      maxHeight: "80vh",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-
-                {/* Post Description */}
-                <CardContent>
-                  <Typography variant="body2">{post.description}</Typography>
-                </CardContent>
-
-                {/* Actions (Like & Comment) */}
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  p={2}
-                >
-                  <Box display="flex" alignItems="center">
-                    <IconButton color="primary">
-                      <FavoriteBorderIcon />
-                    </IconButton>
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      {post.likes?.length || 0}
-                    </Typography>
-                  </Box>
-
-                  <Box display="flex" alignItems="center">
-                    <IconButton
-                      color="primary"
-                      onClick={() => toggleCommentSection(post.id)}
-                    >
-                      <ChatBubbleOutlineIcon />
-                    </IconButton>
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      {post.comments.length || 0}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Comments Section (Show only when toggled) */}
-                {openComments[post.id] && (
-                  <ViewComments
-                    postId={post.id}
-                    onCommentAdded={() => toggleCommentSection(post.id)}
-                  />
-                )}
-              </Card>
-            </Grid>
-          ))}
+      {loading ? (
+        <LinearLoader />
+      ) : (
+        posts.map((post, index) => (
+          <Box
+            key={post.id}
+            ref={index === posts.length - 1 ? lastPostRef : null}
+          >
+            <PostCard {...post} />
+          </Box>
+        ))
+      )}
 
       {/* Show loading spinner when fetching more */}
       {fetchingMore && (
@@ -215,13 +133,13 @@ export default function ViewPosts() {
       )}
 
       {/* Show message when all posts are loaded */}
-      {!hasMore && !fetchingMore && (
+      {!hasMoreRef.current && !fetchingMore && (
         <Box textAlign="center" width="100%" my={2}>
           <Typography variant="body2" color="text.secondary">
             🎉 You've reached the end!
           </Typography>
         </Box>
       )}
-    </Grid>
+    </Box>
   );
 }

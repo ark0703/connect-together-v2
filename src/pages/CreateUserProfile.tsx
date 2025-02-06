@@ -20,33 +20,27 @@ export default function UserProfile() {
   const { user: authUser } = useAuth();
 
   const [user, setUser] = useState<UserType | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState<boolean>(false);
   const [formData, setFormData] = useState<Partial<UserType>>({});
   const [customDepartment, setCustomDepartment] = useState("");
 
   const departments = ["CSE", "ECE", "ME", "CE", "Other"];
 
   useEffect(() => {
-    if (!authUser) return;
+    if (!authUser) {
+      setEditing(!authUser);
+      return;
+    }
 
-    supabase
-      .from("users")
-      .select("*")
-      .eq("uuid", authUser.uuid)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error(error);
-        else {
-          setUser(data);
-          setFormData(data);
-        }
-      });
+    setEditing(!authUser);
+    setUser(authUser);
+    setFormData(authUser);
   }, [authUser]);
 
   const handleUpdateClick = () => setEditing(true);
 
   const handleChange = (field: keyof UserType, value: string | boolean) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -69,7 +63,7 @@ export default function UserProfile() {
             batch: "",
             course: "",
             department: "",
-            email: "",
+            email: authUser.email,
             first_name: "",
             last_name: "",
             phone: "",
@@ -108,8 +102,7 @@ export default function UserProfile() {
               {[
                 { label: "First Name", key: "first_name", editable: true },
                 { label: "Last Name", key: "last_name", editable: true },
-                { label: "Email Address", key: "email", editable: false },
-                { label: "Username", key: "username", editable: false },
+                { label: "Username", key: "username", editable: !user },
                 { label: "Phone", key: "phone", editable: true },
                 { label: "College", key: "college", editable: true },
                 { label: "Course", key: "course", editable: true },
@@ -134,6 +127,16 @@ export default function UserProfile() {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {/* Show Email Address Only If User Exists */}
+              {user && (
+                <TableRow>
+                  <TableCell>
+                    <b>Email Address</b>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                </TableRow>
+              )}
 
               {/* Are You an Alimony (Dropdown) */}
               <TableRow>
@@ -176,6 +179,7 @@ export default function UserProfile() {
                       <TextField
                         select
                         fullWidth
+                        sx={{ mb: 1 }}
                         value={formData.department || ""}
                         onChange={(e) =>
                           handleChange("department", e.target.value)

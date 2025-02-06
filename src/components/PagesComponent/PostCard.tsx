@@ -8,6 +8,7 @@ import {
   IconButton,
   Typography,
   CardActions,
+  Box,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -16,6 +17,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import supabase from "../../utils/supabase";
 import readImage from "../../utils/readImage";
 import ViewComments from "../ViewComments";
+import dayjs from "dayjs"; // For date formatting
 
 const PostCard: React.FC<PostLikeUserType> = (post) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -28,14 +30,12 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
   useEffect(() => {
     if (!user) return;
 
-    // Load like status from localStorage
     const storedLikes = JSON.parse(localStorage.getItem("likedPosts") || "{}");
     if (storedLikes[post.id]) {
       setIsLiked(true);
       return;
     }
 
-    // Fetch all likes for the post
     const fetchLikes = async () => {
       const { data: likes, error } = await supabase
         .from("likes")
@@ -47,11 +47,9 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
         return;
       }
 
-      // Check if the user already liked the post
       const userLiked = likes.some((like) => like.user_id === user.id);
       setIsLiked(userLiked);
 
-      // Save to local storage
       if (userLiked) {
         localStorage.setItem(
           "likedPosts",
@@ -69,7 +67,6 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
     const storedLikes = JSON.parse(localStorage.getItem("likedPosts") || "{}");
 
     if (!isLiked) {
-      // Add like
       const { error } = await supabase
         .from("likes")
         .insert([{ post_id: post.id, user_id: user.id }]);
@@ -82,13 +79,11 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
 
-      // Update local storage
       localStorage.setItem(
         "likedPosts",
         JSON.stringify({ ...storedLikes, [post.id]: true })
       );
     } else {
-      // Remove like
       const { error } = await supabase
         .from("likes")
         .delete()
@@ -103,7 +98,6 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
       setIsLiked(false);
       setLikeCount((prev) => prev - 1);
 
-      // Remove from local storage
       const updatedLikes = { ...storedLikes };
       delete updatedLikes[post.id];
       localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
@@ -117,9 +111,10 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
         display: "grid",
         gridTemplateColumns: "1fr",
         gap: 2,
+        p: 2,
       }}
     >
-      {/* Header: Profile Image & Name */}
+      {/* Header: Profile Image, Name & Timestamp */}
       <CardHeader
         avatar={
           <Avatar src={post?.user_id?.profile_pic || "/default-profile.png"} />
@@ -128,6 +123,11 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
           post?.user_id?.last_name ?? ""
         }`}
         subheader={post?.title ?? "No title available"}
+        action={
+          <Typography variant="caption" color="text.secondary">
+            {dayjs(post?.created_at).format("MMM D, YYYY h:mm A")}
+          </Typography>
+        }
       />
 
       {/* Media (Image or Video) */}
@@ -136,7 +136,7 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
           sx={{
             width: "100%",
             height: "auto",
-            maxHeight: "80vh",
+            maxHeight: "60vh",
             objectFit: "cover",
           }}
           key={index}
@@ -156,23 +156,35 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
 
       {/* Like & Comment Buttons */}
       <CardActions disableSpacing>
-        <IconButton
-          onClick={handleLike}
-          aria-label="like"
-          color={isLiked ? "primary" : "default"}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            width: "100%",
+            alignItems: "center",
+            gap: 2,
+          }}
         >
-          <FavoriteIcon />
-        </IconButton>
-        <Typography variant="body2">{likeCount}</Typography>
+          <IconButton
+            onClick={handleLike}
+            aria-label="like"
+            color={isLiked ? "primary" : "default"}
+            sx={{ fontSize: "1.5rem" }} // Increase icon size
+          >
+            <FavoriteIcon sx={{ fontSize: 28 }} />
+          </IconButton>
+          <Typography variant="body2">{likeCount}</Typography>
 
-        <IconButton
-          aria-label="comment"
-          color={openComments ? "primary" : "default"}
-          onClick={() => setOpenComments(!openComments)}
-        >
-          <CommentIcon />
-        </IconButton>
-        <Typography variant="body2">{commentCount}</Typography>
+          <IconButton
+            aria-label="comment"
+            color={openComments ? "primary" : "default"}
+            onClick={() => setOpenComments(!openComments)}
+            sx={{ fontSize: "1.5rem" }} // Increase icon size
+          >
+            <CommentIcon sx={{ fontSize: 28 }} />
+          </IconButton>
+          <Typography variant="body2">{commentCount}</Typography>
+        </Box>
       </CardActions>
 
       {/* Comments Section */}

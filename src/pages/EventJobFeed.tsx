@@ -32,18 +32,17 @@ const FeedPage = () => {
     <Box
       sx={{
         maxWidth: {
-          xs: "100%", // Full width on extra-small screens
-          sm: "540px", // Small screens
-          md: "720px", // Medium screens
-          lg: "960px", // Large screens
+          xs: "95%", // Full width on extra-small screens
+          sm: "440px", // Small screens
+          md: "620px", // Medium screens
+          lg: "860px", // Large screens
           xl: "1140px", // Extra-large screens
         },
         margin: "auto",
-        mt: 4,
       }}
     >
       <Typography variant="h4" gutterBottom>
-        {type === "events" ? "Events" : "Jobs"}
+        {type === "events" ? "Events" : type === "jobs" && "Jobs"}
       </Typography>
       {loading ? (
         <CircularProgress />

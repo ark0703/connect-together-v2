@@ -4,10 +4,12 @@ import { useAuth } from "./contexts/AuthContext";
 import LinearLoader from "./components/LinearLoader";
 import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
 import Navbar from "./components/PagesComponent/Navbar";
+import { useLocation } from "react-router";
 import React from "react";
 
 export default function App() {
   const { loading, user } = useAuth();
+  const location = useLocation(); // Get current route
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   if (loading) {
@@ -18,26 +20,20 @@ export default function App() {
     );
   }
 
-  return (
-    <Box height="100vh" display="flex" flexDirection="column">
-      <Container
-        ref={containerRef}
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
-        {user && !/^\/messages\/[^/]+$/.test(window.location.pathname) && (
-          <Navbar />
-        )}
-        <Router />
-      </Container>
+  // Hide Navbar & Floating Message Button on /messages and its subroutes
+  const hideComponents = /^\/messages\/[^/]+$/.test(location.pathname);
 
-      {user && !/^\/messages\/[^/]+$/.test(window.location.pathname) && (
-        <FloatingMessageButton />
-      )}
+  return (
+    <Box
+      height="100vh"
+      display="flex"
+      flexDirection="column"
+      sx={{ m: 0, p: 0 }}
+    >
+      {user && !hideComponents && <Navbar />}
+      <Router />
+
+      {user && !hideComponents && <FloatingMessageButton />}
     </Box>
   );
 }

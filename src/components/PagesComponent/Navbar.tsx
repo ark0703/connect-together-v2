@@ -14,27 +14,22 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Container,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import Logo from "../../assets/logo.svg";
 import CreatePost from "../CreatePost";
-import supabase from "../../utils/supabase";
+import { useAuth } from "../../contexts/AuthContext";
+import { Link } from "react-router";
 
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error logging out:", error.message);
-      return;
-    }
-    console.log("Logged out");
-    navigate("/login"); // Navigate to the LogOutUser component
-  };
+  const handleLogout = () => signOut();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -69,86 +64,95 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          {/* Left Side - Logo */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              padding: 0,
-              pt: "0.8rem",
-            }}
-          >
-            <img src={Logo} alt="Logo" width="55%" />
-          </Box>
+      <AppBar
+        position="static"
+        color="transparent"
+        elevation={0}
+        sx={{ boxShadow: (theme) => theme.shadows[1], mb: 2 }}
+      >
+        <Container>
+          <Toolbar sx={{ justifyContent: "space-between" }}>
+            {/* Left Side - Logo */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
 
-          {/* Desktop Navigation */}
-          <Box
-            sx={{
-              display: { xs: "none", md: "flex" },
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            {Object.values(navLinks).map(({ name, fun }) => (
-              <Button key={name} onClick={fun} color="inherit">
-                {name}
-              </Button>
-            ))}
-            <Button
-              variant="contained"
-              color="secondary"
-              sx={{ borderRadius: 10 }}
-              onClick={() => setOpen(true)}
+                paddingY: 1,
+              }}
             >
-              POST
-            </Button>
+              <Link to="/">
+                <img src={Logo} alt="Logo" width="55%" />
+              </Link>
+            </Box>
 
-            {/* Avatar with Menu (Desktop) */}
-            <IconButton onClick={handleAvatarClick}>
+            {/* Desktop Navigation */}
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              {Object.values(navLinks).map(({ name, fun }) => (
+                <Button key={name} onClick={fun} color="inherit">
+                  {name}
+                </Button>
+              ))}
+              <Button
+                variant="contained"
+                color="secondary"
+                sx={{ borderRadius: 10 }}
+                onClick={() => setOpen(true)}
+              >
+                POST
+              </Button>
+
+              {/* Avatar with Menu (Desktop) */}
+              <IconButton onClick={handleAvatarClick}>
+                <Avatar
+                  alt="User Avatar"
+                  src="/static/images/avatar/1.jpg"
+                  sx={{ width: 40, height: 40 }}
+                />
+              </IconButton>
+
+              {/* Avatar Dropdown Menu */}
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                {Object.values(avatarLinks).map(({ name, fun }) => (
+                  <MenuItem
+                    key={name}
+                    onClick={() => {
+                      fun();
+                      handleClose();
+                    }}
+                  >
+                    {name}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+
+            {/* Mobile Avatar (Replaces Menu Icon) */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="end"
+              onClick={handleDrawerToggle}
+              sx={{ display: { md: "none" }, paddingBottom: 0 }}
+            >
               <Avatar
                 alt="User Avatar"
                 src="/static/images/avatar/1.jpg"
                 sx={{ width: 40, height: 40 }}
               />
             </IconButton>
-
-            {/* Avatar Dropdown Menu */}
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              {Object.values(avatarLinks).map(({ name, fun }) => (
-                <MenuItem
-                  key={name}
-                  onClick={() => {
-                    fun();
-                    handleClose();
-                  }}
-                >
-                  {name}
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-
-          {/* Mobile Avatar (Replaces Menu Icon) */}
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="end"
-            onClick={handleDrawerToggle}
-            sx={{ display: { md: "none" }, paddingBottom: 0 }}
-          >
-            <Avatar
-              alt="User Avatar"
-              src="/static/images/avatar/1.jpg"
-              sx={{ width: 40, height: 40 }}
-            />
-          </IconButton>
-        </Toolbar>
+          </Toolbar>
+        </Container>
       </AppBar>
 
       {/* Mobile Drawer */}
