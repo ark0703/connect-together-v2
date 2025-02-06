@@ -5,6 +5,7 @@ import LinearLoader from "./components/LinearLoader";
 import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
 import Navbar from "./components/PagesComponent/Navbar";
 import { useLocation } from "react-router";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import React from "react";
 
 export default function App() {
@@ -24,15 +25,10 @@ export default function App() {
   const hideComponents = /^\/messages\/[^/]+$/.test(location.pathname);
 
   return (
-    <Box
-      height="100vh"
-      display="flex"
-      flexDirection="column"
-      sx={{ m: 0, p: 0 }}
-    >
+    <Box height="100vh" display="flex" flexDirection="column">
       {user && !hideComponents && <Navbar />}
       <Router />
-
+      <SpeedInsights />
       {user && !hideComponents && <FloatingMessageButton />}
     </Box>
   );
