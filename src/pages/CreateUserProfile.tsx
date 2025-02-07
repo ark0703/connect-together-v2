@@ -15,9 +15,8 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import supabase from "../utils/supabase";
 import { UserType } from "../types/types";
-
 export default function UserProfile() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, signOut } = useAuth();
 
   const [user, setUser] = useState<UserType | null>(null);
   const [editing, setEditing] = useState<boolean>(false);
@@ -227,6 +226,15 @@ export default function UserProfile() {
                 </TableRow>
               ) : (
                 <TableRow>
+                  <TableCell colSpan={1} align="left">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={signOut}
+                    >
+                      Logout
+                    </Button>
+                  </TableCell>
                   <TableCell colSpan={2} align="right">
                     <Button
                       variant="contained"
