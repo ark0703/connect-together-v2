@@ -83,7 +83,7 @@ export default function AuthContextProvider({
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_, session) => {
         if (session?.user) {
           setIsLoggedIn(true);
           getUser();
