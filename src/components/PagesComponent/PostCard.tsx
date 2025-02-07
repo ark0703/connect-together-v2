@@ -18,6 +18,7 @@ import supabase from "../../utils/supabase";
 import readImage from "../../utils/readImage";
 import ViewComments from "../ViewComments";
 import dayjs from "dayjs"; // For date formatting
+import moment from "moment";
 
 const PostCard: React.FC<PostLikeUserType> = (post) => {
   const [isLiked, setIsLiked] = useState(false);

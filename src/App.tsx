@@ -1,11 +1,10 @@
-import { Box, Container } from "@mui/material";
+import { Box } from "@mui/material";
 import Router from "./components/Router";
 import { useAuth } from "./contexts/AuthContext";
 import LinearLoader from "./components/LinearLoader";
 import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
 import Navbar from "./components/PagesComponent/Navbar";
 import { useLocation } from "react-router";
-
 export default function App() {
   const { loading, user } = useAuth();
   const location = useLocation(); // Get current route
