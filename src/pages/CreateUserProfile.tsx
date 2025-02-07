@@ -16,7 +16,7 @@ import { useAuth } from "../contexts/AuthContext";
 import supabase from "../utils/supabase";
 import { UserType } from "../types/types";
 export default function UserProfile() {
-  const { user: authUser, signOut } = useAuth();
+  const { user: authUser, signOut, sb_user } = useAuth();
 
   const [user, setUser] = useState<UserType | null>(null);
   const [editing, setEditing] = useState<boolean>(false);
@@ -30,6 +30,7 @@ export default function UserProfile() {
       setEditing(!authUser);
       return;
     }
+    sb_user;
 
     setEditing(!authUser);
     setUser(authUser);
@@ -43,40 +44,52 @@ export default function UserProfile() {
   };
 
   const handleSubmit = async () => {
-    if (!authUser) return;
+    if (!sb_user) {
+      console.error("No authenticated user found.");
+      return;
+    }
 
-    const updateData = { ...formData };
+    let updateData = { ...formData };
+
+    // If department is "Other", use the customDepartment value
     if (updateData.department === "Other") {
       updateData.department = customDepartment;
     }
 
-    const { error } = user
-      ? await supabase
-          .from("users")
-          .update(updateData)
-          .eq("uuid", authUser.uuid)
-      : await supabase.from("users").insert([
-          {
-            ...updateData,
-            uuid: authUser.uuid,
-            batch: "",
-            course: "",
-            department: "",
-            email: authUser.email,
-            first_name: "",
-            last_name: "",
-            phone: "",
-            status: true,
-            username: "",
-            is_alimony: false,
-          },
-        ]);
+    // Ensure all required fields are filled
+    const userData = {
+      uuid: sb_user.id,
+      email: sb_user.email,
+      first_name: updateData.first_name || "",
+      last_name: updateData.last_name || "",
+      username: updateData.username || sb_user.email.split("@")[0], // Default username
+      phone: updateData.phone || "",
+      college: updateData.college || "",
+      course: updateData.course || "",
+      batch: updateData.batch || "",
+      department: updateData.department || "",
+      status: true,
+      is_alimony: updateData.is_alimony ?? false,
+    };
 
-    if (error) {
-      console.error(error);
+    // Check if user exists, then update or insert
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("uuid")
+      .eq("uuid", sb_user.id)
+      .maybeSingle();
+
+    if (existingUser) {
+      // Update the existing user
+      const { error } = await supabase
+        .from("users")
+        .update(userData)
+        .eq("uuid", sb_user.id);
+      if (error) console.error("Error updating user:", error.message);
     } else {
-      setUser(updateData as UserType);
-      setEditing(false);
+      // Insert new user
+      const { error } = await supabase.from("users").insert(userData);
+      if (error) console.error("Error inserting user:", error.message);
     }
   };
 
@@ -119,6 +132,7 @@ export default function UserProfile() {
                         onChange={(e) =>
                           handleChange(key as keyof UserType, e.target.value)
                         }
+                        required
                       />
                     ) : (
                       user?.[key as keyof UserType] || "—"
@@ -155,6 +169,7 @@ export default function UserProfile() {
                       onChange={(e) =>
                         handleChange("is_alimony", e.target.value === "true")
                       }
+                      required
                     >
                       <MenuItem value="true">Yes</MenuItem>
                       <MenuItem value="false">No</MenuItem>
@@ -183,6 +198,7 @@ export default function UserProfile() {
                         onChange={(e) =>
                           handleChange("department", e.target.value)
                         }
+                        required
                       >
                         {departments.map((dept) => (
                           <MenuItem key={dept} value={dept}>

@@ -5,17 +5,19 @@ import {
   useEffect,
   useState,
 } from "react";
-import { UserType } from "../types/types";
+import { UserType, SupabaseUserType } from "../types/types";
 import supabase from "../utils/supabase";
 import useDebounce from "../hooks/useDebounce";
 
 const AuthContext = createContext<{
   user: UserType | null;
+  sb_user: SupabaseUserType | null;
   loading: boolean;
   signOut: () => void;
   isLoggedIn: boolean;
 }>({
   user: null,
+  sb_user: null,
   loading: true,
   signOut: () => {},
   isLoggedIn: false,
@@ -31,6 +33,7 @@ export default function AuthContextProvider({
   children: ReactNode;
 }) {
   const [user, setUser] = useState<UserType | null>(null);
+  const [sb_user, setSbUser] = useState<SupabaseUserType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
@@ -43,8 +46,10 @@ export default function AuthContextProvider({
         }
         if (!user) {
           setUser(null);
+          setSbUser(null);
           return;
         }
+        setSbUser(user as SupabaseUserType); // Store the Supabase user
 
         const { data, error: userError } = await supabase
           .from("users")
@@ -53,11 +58,13 @@ export default function AuthContextProvider({
           .single();
 
         if (userError) {
-          console.error("Error fetching user data:", userError.message);
+          console.warn(
+            "No users table found or error fetching user data:",
+            userError.message
+          );
           return;
         }
 
-        console.log(data);
         setUser(data);
 
         // Update is_online status when fetching user
@@ -65,7 +72,7 @@ export default function AuthContextProvider({
           .from("users")
           .update({
             is_online: true,
-            last_seen: new Date().toISOString(), // Ensures a recent timestamp
+            last_seen: new Date().toISOString(),
           })
           .eq("uuid", user.id);
       });
@@ -81,27 +88,25 @@ export default function AuthContextProvider({
           setIsLoggedIn(true);
           getUser();
         } else {
-          console.log(event);
-
           setIsLoggedIn(false);
           setUser(null);
+          setSbUser(null);
         }
       }
     );
 
-    // Check if user is already logged in when the component mounts
     supabase.auth.getUser().then(({ error, data: { user } }) => {
       if (error) {
         console.error("Error fetching user:", error);
       }
       if (user) {
         setIsLoggedIn(true);
+        setSbUser(user as SupabaseUserType);
         getUser();
       }
       setLoading(false);
     });
 
-    // Cleanup function to prevent memory leaks
     return () => {
       authListener?.subscription.unsubscribe();
     };
@@ -132,6 +137,7 @@ export default function AuthContextProvider({
     <AuthContext.Provider
       value={{
         user,
+        sb_user,
         loading,
         signOut: async () => {
           if (user) {
@@ -145,9 +151,10 @@ export default function AuthContextProvider({
           }
           await supabase.auth.signOut();
           setUser(null);
+          setSbUser(null);
           setIsLoggedIn(false);
         },
-        isLoggedIn: isLoggedIn,
+        isLoggedIn,
       }}
     >
       {children}

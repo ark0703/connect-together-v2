@@ -13,6 +13,14 @@ export type LikeType = Database["public"]["Tables"]["likes"]["Row"];
 type UserIDType = {
   user_id: UserType;
 };
+interface SupabaseUser {
+  id: string;
+  email: string;
+  phone?: string;
+  created_at: string;
+  app_metadata: any;
+  user_metadata: any;
+}
 
 type LikeUserType = LikeType & UserIDType;
 
@@ -35,3 +43,5 @@ export type PostLikeUserType = PostUserType &
 export type PostCommentUserType = CommentType & UserIDType;
 
 export type MessageUserType = MessageType & UserIDType;
+
+export type SupabaseUserType = SupabaseUser;
