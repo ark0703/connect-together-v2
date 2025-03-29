@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import moment from "moment";
-import { lightGreen } from "@mui/material/colors";
 
 export default function Messages() {
   const [secondUser, setSecondUser] = useState<UserType | null>(null);
