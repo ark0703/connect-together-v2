@@ -55,10 +55,7 @@ const Navbar: React.FC = () => {
   // Avatar Dropdown Links
   const avatarLinks = {
     profile: { name: "Profile", fun: () => navigate("/profile") },
-    darkMode: {
-      name: "Dark Mode",
-      fun: () => console.log("Dark mode toggled"),
-    },
+    
     logout: { name: "Logout", fun: handleLogout },
   };
 
