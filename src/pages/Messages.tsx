@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { MessageType, UserType } from "../types/types";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, data } from "react-router";
 import supabase from "../utils/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import moment from "moment";
+import { lightGreen } from "@mui/material/colors";
 
 export default function Messages() {
   const [secondUser, setSecondUser] = useState<UserType | null>(null);
@@ -39,20 +40,31 @@ export default function Messages() {
       .then(({ data, error }) => {
         if (error) {
           console.error("Error fetching second user:", error);
+          alert("second user not found");
           return;
         }
+        console.log(data);
+
         setSecondUser(data);
       });
   }, [username]);
 
   const fetchMessages = async () => {
-    if (!secondUser || !user) return;
+    if (!secondUser || !user) {
+      console.log(`second user ${secondUser} or user ${user}`);
+      return;
+    }
+    console.log(
+      "Fetching messages between:",
+      secondUser.username,
+      user.username
+    );
 
     const { data, error } = await supabase
       .from("message")
       .select("*")
       .or(
-        `sent_by.eq.${secondUser.id},sent_to.eq.${user.id},sent_by.eq.${user.id},sent_to.eq.${secondUser.id}`
+        `and(sent_by.eq.${user.username},sent_to.eq.${secondUser.username}),and(sent_by.eq.${secondUser.username},sent_to.eq.${user.username})`
       )
       .order("created_at", { ascending: true });
 
@@ -60,14 +72,61 @@ export default function Messages() {
       console.error("Error fetching messages:", error);
       return;
     }
+    console.log(data);
+    console.log("User:", user?.username);
+    console.log("Second User:", secondUser?.username);
 
     setMessages(data);
+
     scrollToBottom();
+
+    const unreadMessages = data.filter(
+      (msg) => msg.sent_to === user.username && !msg.is_read
+    );
+
+    if (unreadMessages.length > 0) {
+      const messageIds = unreadMessages.map((msg) => msg.id);
+      await supabase
+        .from("message")
+        .update({ is_read: true })
+        .in("id", messageIds);
+    }
   };
 
   useEffect(() => {
-    fetchMessages();
-  }, [secondUser, user]);
+    const subscription = supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "message" }, // Listen for INSERT & UPDATE
+        (payload) => {
+          const updatedMessage = payload.new as MessageType;
+          setMessages((prevMessages) => {
+            const index = prevMessages.findIndex(
+              (msg) => msg.id === updatedMessage.id
+            );
+            if (index !== -1) {
+              prevMessages[index] = updatedMessage;
+              return [...prevMessages]; // Update UI with read status
+            }
+            return [...prevMessages, updatedMessage]; // Add new messages
+          });
+          scrollToBottom();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (secondUser && user) {
+      fetchMessages();
+      console.log(message);
+    }
+  }, [secondUser, user]); // Fetch messages only when both are available
 
   useEffect(() => {
     const subscription = supabase
@@ -102,8 +161,8 @@ export default function Messages() {
     const { error } = await supabase.from("message").insert([
       {
         message,
-        sent_by: user.id,
-        sent_to: secondUser.id,
+        sent_by: user.username,
+        sent_to: secondUser.username,
         is_read: false,
       },
     ]);
@@ -156,7 +215,12 @@ export default function Messages() {
                   <Typography variant="h6">
                     {secondUser.first_name} {secondUser.last_name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "lightgray" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: secondUser.is_online ? "lightgreen" : "lightgray",
+                    }}
+                  >
                     {secondUser.is_online
                       ? "● Online"
                       : `Last seen ${moment(secondUser.last_seen).fromNow()}`}
@@ -187,11 +251,11 @@ export default function Messages() {
               sx={{
                 display: "flex",
                 justifyContent:
-                  msg.sent_by === user?.id ? "flex-end" : "flex-start",
+                  msg.sent_by === user?.username ? "flex-end" : "flex-start",
                 mb: 2,
               }}
             >
-              {msg.sent_by !== user?.id && (
+              {msg.sent_by !== user?.username && (
                 <Avatar
                   src={secondUser?.profile_pic || undefined}
                   alt={secondUser?.username}
@@ -204,12 +268,12 @@ export default function Messages() {
                   borderRadius: 2,
                   maxWidth: "60%",
                   bgcolor:
-                    msg.sent_by === user?.id
+                    msg.sent_by === user?.username
                       ? theme.palette.primary.main
                       : theme.palette.grey[300],
-                  color: msg.sent_by === user?.id ? "white" : "black",
+                  color: msg.sent_by === user?.username ? "white" : "black",
                   alignSelf:
-                    msg.sent_by === user?.id ? "flex-end" : "flex-start",
+                    msg.sent_by === user?.username ? "flex-end" : "flex-start",
                 }}
               >
                 <Typography>{msg.message}</Typography>

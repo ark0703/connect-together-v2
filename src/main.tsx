@@ -13,12 +13,12 @@ import SupabaseLiveListener from "./contexts/SupabaseLiveListener.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <CssBaseline />
-    <BrowserRouter>
-      <SupabaseLiveListener>
-        <AuthContextProvider>
+    <SupabaseLiveListener>
+      <AuthContextProvider>
+        <BrowserRouter>
           <App />
-        </AuthContextProvider>
-      </SupabaseLiveListener>
-    </BrowserRouter>
+        </BrowserRouter>
+      </AuthContextProvider>
+    </SupabaseLiveListener>
   </StrictMode>
 );

@@ -15,7 +15,7 @@ import Logo from "../assets/logo.svg";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
-export default function Login() {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState({ status: false, message: "" });
   const [password, setPassword] = useState("");
@@ -41,10 +41,11 @@ export default function Login() {
             : ""
         }`,
       });
-
       return;
     }
+
     setEmailError({ status: false, message: "" });
+
     if (password === "" || password.length < 8) {
       setPasswordError({
         status: true,
@@ -52,7 +53,7 @@ export default function Login() {
           password === ""
             ? "Password is required"
             : password.length < 8
-            ? "Password must contain atleast 8 charcters"
+            ? "Password must contain at least 8 characters"
             : password.length > 25
             ? "Password must contain at most 25 characters"
             : ""
@@ -61,20 +62,31 @@ export default function Login() {
 
       return;
     }
+
     setPasswordError({ status: false, message: "" });
+
     supabase.auth.signInWithPassword({ email, password }).then(({ error }) => {
       if (error) {
         console.error(error);
-
         if (error.code === "invalid_credentials") {
           setError("Invalid email or password");
         }
         return;
       }
       navigate("/home");
-
       console.log("Logged in");
     });
+  };
+
+  const OAuthLogin = async (provider: "google" | "github") => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin },
+    });
+
+    if (error) {
+      console.error("OAuth login error:", error.message);
+    }
   };
 
   return (
@@ -90,14 +102,9 @@ export default function Login() {
         bgcolor: "background.paper",
       }}
     >
-      {/* lOGO */}
+      {/* Logo */}
       <Box
-        sx={{
-          mb: 2,
-          width: { xs: "50%", sm: "40%", md: "30%", lg: "25%" },
-          display: "flex",
-          justifyContent: "center",
-        }}
+        sx={{ mb: 2, width: "30%", display: "flex", justifyContent: "center" }}
       >
         <img
           src={Logo}
@@ -106,22 +113,16 @@ export default function Login() {
         />
       </Box>
 
-      {/* Header Text */}
-      <Box sx={{ mb: 2, width: "80%" }}>
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{
-            fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem", lg: "3rem" },
-            width: "100%", // Ensures it takes up available width
-            textAlign: "center", // Centers text if needed
-          }}
-        >
-          Sign in to your account
-        </Typography>
-      </Box>
+      {/* Header */}
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        sx={{ mb: 2, textAlign: "center" }}
+      >
+        Sign in to your account
+      </Typography>
 
-      {/* Email & Password Fields */}
+      {/* Form */}
       <Box component="form" width="100%" onSubmit={handleSubmit}>
         <TextField
           error={emailError.status}
@@ -145,28 +146,17 @@ export default function Login() {
           required
         />
 
-        {/* Remember me & Forgot password */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            my: 1,
-          }}
-        >
+        {/* Remember Me & Forgot Password */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", my: 1 }}>
           <FormControlLabel control={<Checkbox />} label="Remember me" />
           <Link to="/forgot-password">
-            <Typography
-              variant="body2"
-              color="primary"
-              sx={{ cursor: "pointer" }}
-            >
+            <Typography variant="body2" color="primary">
               Forgot password?
             </Typography>
           </Link>
         </Box>
 
-        {/* Sign-in Button */}
+        {/* Login Button */}
         <Button
           fullWidth
           variant="contained"
@@ -189,14 +179,14 @@ export default function Login() {
           <Button
             variant="outlined"
             startIcon={<GoogleIcon />}
-            sx={{ width: "50%" }}
+            onClick={() => OAuthLogin("google")}
           >
             Google
           </Button>
           <Button
             variant="outlined"
             startIcon={<GitHubIcon />}
-            sx={{ width: "50%" }}
+            onClick={() => OAuthLogin("github")}
           >
             GitHub
           </Button>
@@ -209,16 +199,15 @@ export default function Login() {
             <Typography
               component="span"
               color="primary"
-              sx={{
-                cursor: "pointer",
-                underline: "none",
-              }}
+              sx={{ cursor: "pointer" }}
             >
-              SignUp now{" "}
+              Sign Up now
             </Typography>
           </Link>
         </Typography>
       </Box>
     </Box>
   );
-}
+};
+
+export default Login;

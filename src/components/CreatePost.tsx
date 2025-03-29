@@ -42,6 +42,7 @@ export default function CreatePostPopup({
   };
 
   const handlePost = async () => {
+    console.log("Posting");
     if (!user) {
       console.error("User not logged in");
       return;
@@ -58,23 +59,31 @@ export default function CreatePostPopup({
             .from("posts") // Make sure the bucket name is correct
             .upload(filePath, image);
 
-          if (error) throw error;
-          return data?.fullPath;
+          if (error) {
+            console.error(error);
+            throw error;
+          }
+          console.log(data);
+          return data.fullPath;
         })
       );
 
       const newPost: PostType = {
         id: Date.now(),
-        description: description,
+        description,
         created_at: new Date().toISOString(),
-        media: uploadedImages,
-        user_id: user.id, // Assigning the entire user object
+        media: uploadedImages, // Ensure this is an array of URLs
+        user_id: user.id, // FIXED: Only store user ID
+        type: postType, // FIXED: Use selected postType
+        title,
         is_publishes: true,
-        type: "post",
-        title: title,
       };
 
-      await supabase.from("posts").insert([newPost]);
+      const { error } = await supabase.from("posts").insert([newPost]);
+
+      if (error) {
+        console.error(error);
+      }
 
       setTitle("");
       setImages([]);

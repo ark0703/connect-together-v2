@@ -5,9 +5,9 @@ import LinearLoader from "./components/LinearLoader";
 import FloatingMessageButton from "./components/PagesComponent/FloatingMessageButton";
 import Navbar from "./components/PagesComponent/Navbar";
 import { useLocation } from "react-router";
-export default function App() {
+function AppContent() {
   const { loading, user } = useAuth();
-  const location = useLocation(); // Get current route
+  const location = useLocation(); // ✅ Now inside BrowserRouter
 
   if (loading) {
     return (
@@ -27,4 +27,8 @@ export default function App() {
       {user && !hideComponents && <FloatingMessageButton />}
     </Box>
   );
+}
+
+export default function App() {
+  return <AppContent />;
 }

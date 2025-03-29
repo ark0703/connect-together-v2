@@ -1,8 +1,7 @@
 import { Delete } from "@mui/icons-material";
 import { Box, Button, Icon, IconButton } from "@mui/material";
-import { useRef } from "react";
-
-export default function UploadImage({
+import { memo, useRef } from "react";
+const UploadImage = memo(function UploadImage({
   images,
   setImages,
   maxImages = 1,
@@ -67,4 +66,5 @@ export default function UploadImage({
       </Box>
     </Box>
   );
-}
+});
+export default UploadImage;

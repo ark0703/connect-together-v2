@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => signOut();
@@ -68,7 +68,11 @@ const Navbar: React.FC = () => {
         position="static"
         color="transparent"
         elevation={0}
-        sx={{ boxShadow: (theme) => theme.shadows[1], mb: 2 }}
+        sx={{
+          boxShadow:
+            "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+          mb: 2,
+        }}
       >
         <Container>
           <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -77,7 +81,7 @@ const Navbar: React.FC = () => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-
+                paddingX: 0,
                 paddingY: 1,
               }}
             >
@@ -112,7 +116,11 @@ const Navbar: React.FC = () => {
               <IconButton onClick={handleAvatarClick}>
                 <Avatar
                   alt="User Avatar"
-                  src="/static/images/avatar/1.jpg"
+                  src={
+                    user?.profile_pic
+                      ? user.profile_pic
+                      : "/static/images/avatar/1.jpg"
+                  }
                   sx={{ width: 40, height: 40 }}
                 />
               </IconButton>
@@ -147,7 +155,11 @@ const Navbar: React.FC = () => {
             >
               <Avatar
                 alt="User Avatar"
-                src="/static/images/avatar/1.jpg"
+                src={
+                  user?.profile_pic
+                    ? user.profile_pic
+                    : "/static/images/avatar/1.jpg"
+                }
                 sx={{ width: 40, height: 40 }}
               />
             </IconButton>
@@ -161,7 +173,11 @@ const Navbar: React.FC = () => {
         <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
           <Avatar
             alt="User Avatar"
-            src="/static/images/avatar/1.jpg"
+            src={
+              user?.profile_pic
+                ? user.profile_pic
+                : "/static/images/avatar/1.jpg"
+            }
             sx={{ width: 50, height: 50 }}
           />
         </Box>

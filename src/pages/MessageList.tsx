@@ -30,20 +30,11 @@ export default function MessageList() {
     if (!user) return;
 
     const fetchUsersWithMessages = async () => {
-      const { data: users, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .neq("id", user.id);
-
-      if (userError) {
-        console.error(userError);
-        return;
-      }
-
+      // Fetch messages where the logged-in user is either sender or receiver
       const { data: messages, error: messageError } = await supabase
         .from("message")
         .select("*")
-        .or(`sent_by.eq.${user.id},sent_to.eq.${user.id}`)
+        .or(`sent_by.eq.${user.username},sent_to.eq.${user.username}`)
         .order("created_at", { ascending: false });
 
       if (messageError) {
@@ -51,9 +42,37 @@ export default function MessageList() {
         return;
       }
 
+      // Extract unique usernames that the user has messaged
+      const contactedUsernames = new Set<string>();
+      messages.forEach((msg) => {
+        if (msg.sent_by !== user.username) {
+          contactedUsernames.add(msg.sent_by);
+        }
+        if (msg.sent_to !== user.username) {
+          contactedUsernames.add(msg.sent_to);
+        }
+      });
+
+      if (contactedUsernames.size === 0) {
+        setRecentMessages([]); // If no messages, clear the state
+        return;
+      }
+
+      // Fetch only those users that have been contacted
+      const { data: users, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .in("username", Array.from(contactedUsernames)); // Filter users by usernames
+
+      if (userError) {
+        console.error(userError);
+        return;
+      }
+
+      // Merge latest message data with user info
       const usersWithMessages = users.map((u) => {
         const latestMessage = messages.find(
-          (m) => m.sent_by === u.id || m.sent_to === u.id
+          (m) => m.sent_by === u.username || m.sent_to === u.username
         );
         return { ...u, latestMessage };
       });
@@ -76,8 +95,8 @@ export default function MessageList() {
             let found = false;
             const updatedMessages = prev.map((user) => {
               if (
-                user.id === newMessage.sent_by ||
-                user.id === newMessage.sent_to
+                user.username === newMessage.sent_by ||
+                user.username === newMessage.sent_to
               ) {
                 found = true;
                 return { ...user, latestMessage: newMessage };
@@ -90,7 +109,7 @@ export default function MessageList() {
               return [
                 ...updatedMessages,
                 {
-                  id: newMessage.sent_by,
+                  ...newMessage.user_id,
                   latestMessage: newMessage,
                 } as UserType & {
                   latestMessage?: MessageUserType;

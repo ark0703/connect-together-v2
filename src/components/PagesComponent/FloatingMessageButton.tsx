@@ -17,7 +17,7 @@ const FloatingMessageButton = () => {
   if (location.pathname === "/messages") {
     return null;
   }
-
+// 
   return (
     <Tooltip title="Messages">
       <Fab

@@ -117,7 +117,7 @@ const PostCard: React.FC<PostLikeUserType> = (post) => {
       {/* Header: Profile Image, Name & Timestamp */}
       <CardHeader
         avatar={
-          <Avatar src={post?.user_id?.profile_pic || "/default-profile.png"} />
+          <Avatar src={post.user_id.profile_pic || "/default-profile.png"} />
         }
         title={`${post?.user_id?.first_name ?? "Anonymous"} ${
           post?.user_id?.last_name ?? ""

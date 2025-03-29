@@ -11,7 +11,6 @@ import UpdatePassword from "./UpdatePassword";
 import Contact from "../pages/Contact";
 import About from "../pages/About";
 import EventJobFeed from "../pages/EventJobFeed";
-
 export default function Router() {
   const { isLoggedIn, user } = useAuth();
   console.log(isLoggedIn, user);
@@ -28,6 +27,7 @@ export default function Router() {
         <>
           <Route path="*" element={<Home />} />
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/:type" element={<EventJobFeed />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
