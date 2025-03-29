@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { MessageType, UserType } from "../types/types";
-import { useParams, useNavigate, data } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import supabase from "../utils/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import {
